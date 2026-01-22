@@ -220,7 +220,7 @@
 | `ATP_stoich_AA` | number | mol ATP/g | AA oksidasyonu ATP verimi | Profile calc | A.15, A.16 |
 | `ATP_stoich_FA` | number | mol ATP/g | FA oksidasyonu ATP verimi | Profile calc | A.15, A.16, A.18 |
 | `m_ox_AA` | number | g/day | Oksidize edilen AA kütlesi | A.16, A.17 | A.18, A.40 |
-| `m_ox_FA` | number | g/day | Oksidize edilen FA kütlesi | A.18 | A.14, A.46 |
+| `m_ox_FA` | number | g/day | Oksidize edilen FA kütlesi | A.18 | A.46 |
 | `ATP_AA_ox` | number | mol/day | AA oksidasyonundan ATP | Calculation | A.18 |
 
 ### 4.5 Protein Synthesis
@@ -509,17 +509,128 @@ import {
   BodyComposition,
   RibosomeState,
   FishState,
+  GutKinetics,
+  GlycogenParams,
+  PerformanceData,
+  PerformanceMetrics,
 
   // Constants
   AA_MOLECULAR_WEIGHTS,
+  FA_MOLECULAR_WEIGHTS,
+  ATP_STOICH_AA,
+  ATP_STOICH_FA,
+  ATP_PER_GLUCOSE,
+  GLUCOSE_PER_PALMITATE,
+  MAX_ATP_EXPENDITURE_PER_G_PER_HOUR,
+  GLUCONEOGENESIS_STOICH,
+  NEAA_SYNTHESIS_STOICH,
 
-  // Formulas
+  // Calibration (Eq. 1-4)
+  calculateMAPE,
+  calculateCAE,
+  calculateWE_CL,
+  calibrationObjective,
+
+  // Feed Intake (Eq. A.1-A.3)
+  calculateFI_max_original,
+  calculateFI_max_smooth,
+  calculateActualFeedIntake,
   calculateFeedIntake,
+  feedFromTable,
+
+  // Gut Compartment (Eq. A.4-A.8)
+  calculateDigestibleIntake,
+  calculateDigestionRate,
+  calculateAbsorptionRate,
+  calculateEnzymeDynamics,
+  calculateReceptorDynamics,
+  updateGutState,
+  getAbsorbedNutrients,
+
+  // Body Composition (Eq. A.9-A.11)
+  calculateTotalProtein,
+  calculateTotalLipid,
   calculateCL_q,
+  calculateLipidRef,
+  calculateBodyWeight,
+  calculateCrudeProteinPercent,
+  calculateCrudeLipidPercent,
+  calculateTotalFreeAA,
+  getAAProfile,
+  getFAProfile,
+
+  // Energy Model (Eq. A.12-A.18)
+  calculateATPExpenditure,
+  calculateATPRequired,
+  calculateAAtoFAOxidationRatio,
+  calculateATPStoichAA,
+  calculateATPStoichFA,
+  calculateMassAAOxidized,
+  adjustAAOxidation,
+  calculateMassFAOxidized,
   calculateEnergyBalance,
+  constrainATPExpenditure,
+
+  // Nitrogen Metabolism (Eq. A.19-A.42)
+  calculateMaxProteinSynthesis,
+  calculateTemperatureEffectSynthesis,
+  calculateRibosomeActivation,
+  calculateRibosomeDeactivation,
+  updateRibosomeState,
+  calculateRibosomeActivity,
+  calculateTranslationRate,
+  calculateProteinSynthesisRegulator,
+  calculateAASynthesisValve,
   calculateActualProteinSynthesis,
+  calculateMaxProteinDegradation,
+  calculateDegradationTempFactor,
+  calculateMinProteinDegradation,
+  calculateAADegradationValve,
+  calculateActualProteinDegradation,
+  calculateMinAALoss,
+  normalizeAAFreeMax,
+  normalizeAAFreeMin,
+  calculateAAOxidationValve,
+  calculateAAOxidationWeights,
+  calculateAAOxidationRate,
+  calculateMaxGluconeogenesis,
+  calculateActualGluconeogenesis,
+  calculateGluconeogenesisWeights,
+  calculateNEAASynthesis,
+  methionineToCysteine,
+  phenylalanineToTyrosine,
+
+  // Carbon Metabolism (Eq. A.43-A.46)
+  calculateMaxGlucoseOxidation,
+  calculateActualGlucoseOxidation,
+  calculateMaxGlycogenTurnover,
+  calculateGlycogenesis,
+  calculateGlycogenolysis,
+  calculateNetGlycogenFlux,
+  calculateMaxLipogenesis,
+  calculateActualLipogenesis,
+  calculateFAFromLipogenesis,
+  calculateFABetaOxidation,
+  calculateFAOxidationWeights,
+  calculateCarbonMetabolism,
+  calculateATPFromGlucose,
+
+  // Performance Indicators
   calculateRGR,
-  // ... etc
+  calculateSGR,
+  calculateFCR,
+  calculateFeedEfficiency,
+  calculatePER,
+  calculateNRE,
+  calculateLRE,
+  calculateERE,
+  calculateTGC,
+  calculateConditionFactor,
+  calculateHSI,
+  calculateVSI,
+  calculateSurvivalRate,
+  calculateDFI,
+  calculatePerformanceMetrics
 } from 'feednetics';
 ```
 
