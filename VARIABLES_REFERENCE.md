@@ -204,7 +204,7 @@
 |----------|------|------|------------------|---------------|---------|
 | `protein_total` | number | g | Toplam protein | A.9 | A.19, A.30, A.44 |
 | `lipid_total` | number | g | Toplam lipit | A.10 | A.11 |
-| `CL_q` | number | 0-1 | Ham lipit kontrol değişkeni | A.11 | A.14, A.16, A.17, A.27, A.45 |
+| `CL_q` | number | 0-1 | Ham lipit kontrol değişkeni | A.11 | A.14, A.16, A.27, A.45 |
 | `lipid_ref` | number | g | Referans lipit seviyesi | Interpolation | A.11 |
 
 ### 4.4 Energy Balance
@@ -428,7 +428,7 @@ bodyWeight ──────┬─► A.1, A.2 (Feed intake)
 feedGiven ───────► A.3 (Actual feed intake)
 
 CL_q ────────────┬─► A.14 (AA/FA oxidation ratio)
-                 ├─► A.16, A.17 (AA oxidation mass)
+                 ├─► A.16 (AA oxidation mass)
                  ├─► A.27 (Protein synthesis regulator)
                  └─► A.45 (Lipogenesis control)
 ```
