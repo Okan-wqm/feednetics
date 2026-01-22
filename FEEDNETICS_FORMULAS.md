@@ -1,455 +1,579 @@
-# FEEDNETICS Model - Formül ve Değişken Dokümantasyonu
+# FEEDNETICS Model - Mathematical Formulations
 
-Bu belge, [MDPI makalesi](https://www.mdpi.com/2077-1312/11/3/472) "Development and Application of a Mechanistic Nutrient-Based Model for Precision Fish Farming" makalesindeki FEEDNETICS modelinin formüllerini ve değişkenlerini içermektedir.
+> **Source:** Soares, F.M.R.C. et al. (2023). "Development and Application of a Mechanistic Nutrient-Based Model for Precision Fish Farming." *Journal of Marine Science and Engineering*, 11, 472. https://doi.org/10.3390/jmse11030472
 
----
+## Table of Contents
 
-## 1. Temel Enerji Denge Denklemi (Energy Balance Equation)
+1. [Model Calibration and Validation Metrics](#1-model-calibration-and-validation-metrics)
+1. [Model Inputs](#2-model-inputs)
+1. [Feed Intake Control](#3-feed-intake-control)
+1. [Gut Compartment - Digestion and Absorption](#4-gut-compartment---digestion-and-absorption)
+1. [Body Weight and Composition](#5-body-weight-and-composition)
+1. [Energetic Model](#6-energetic-model)
+1. [Nitrogen Metabolism](#7-nitrogen-metabolism)
+- [Protein Synthesis](#71-protein-synthesis)
+- [Protein Degradation](#72-protein-degradation)
+- [Amino Acid Oxidation](#73-amino-acid-oxidation)
+- [Gluconeogenesis](#74-gluconeogenesis)
+- [Non-Essential Amino Acid Synthesis](#75-non-essential-amino-acid-synthesis)
+1. [Carbon Metabolism](#8-carbon-metabolism)
+- [Glucose Oxidation](#81-glucose-oxidation)
+- [Glycogenesis and Glycogenolysis](#82-glycogenesis-and-glycogenolysis)
+- [Lipogenesis](#83-lipogenesis)
+- [Beta-Oxidation](#84-beta-oxidation)
+1. [Performance Indicators](#9-performance-indicators)
+1. [Calibration Data Ranges](#10-calibration-data-ranges)
 
-Balık biyoenerjetik modellerinin temeli, termodinamiğin ikinci yasasına dayanır:
+-----
+
+## 1. Model Calibration and Validation Metrics
+
+### Mean Absolute Percentage Error (MAPE) - Calibration
+
+**Equation (1)**
+$$MAPE_{cal_{bw}}(\%) = \frac{100}{n} \sum_{i=1}^{n} \left| \frac{P_{bw_i} - O_{bw_i}}{O_{bw_i}} \right|$$
+
+**Where:**
+
+- $P_{bw_i}$ = predicted body weight value (g)
+- $O_{bw_i}$ = observed body weight value (g)
+- $n$ = number of predicted-observed value pairs
+
+### Cumulative Absolute Error (CAE)
+
+**Equation (2)**
+$$CAE_{bw}(g) = \sum_{i=1}^{n} |P_{bw_i} - O_{bw_i}|$$
+
+### Crude Lipids Weighted Error (WECL)
+
+**Equation (3)**
+$$WE_{CL} = \frac{1}{m} \sum_{j=1}^{m} \left( CL_{ref} - CL_{predicted} \right)^2 \times 0.1$$
+
+**Where:**
+
+- $CL_{predicted}$ = predicted whole-body crude lipids content (%)
+- $CL_{ref}$ = reference value for whole-body crude lipids content (%) from quantile regression
+- $m$ = number of time steps
+
+### Mean Absolute Percentage Error (MAPE) - Validation
+
+**Equation (4)**
+$$MAPE_{val_{bw}}(\%) = \frac{100}{n} \sum_{i=1}^{n} \left| \frac{P_{bw_i} - O_{bw_i}}{O_{bw_i}} \right|$$
+
+-----
+
+## 2. Model Inputs
+
+The FEEDNETICS model is driven by three time-dependent inputs (resolution: 0.01 days):
+
+### 2.1 Temperature
+
+- **Input:** Daily temperature average (°C) and daily temperature amplitude
+- **Processing:** Sinusoidal curve generated assuming lowest temperature at midnight
+
+### 2.2 Feed Given
+
+- **Input:** g/day or feeding table (% body weight/day per fish weight class and temperature class)
+- **Processing:** Daily feed distributed using meal frequency and timing parameters
+
+### 2.3 Feed Properties
+
+|Category                                  |Attributes                                                       |
+|------------------------------------------|-----------------------------------------------------------------|
+|Macronutrient composition                 |Crude protein, crude lipids, ash, fiber, gross energy, phosphorus|
+|Apparent digestibility coefficients (ADCs)|Crude protein, crude lipids, gross energy, phosphorus            |
+|Amino acid profile                        |20 proteinogenic amino acids                                     |
+|Fatty acid profile                        |20 different fatty acids                                         |
+
+-----
+
+## 3. Feed Intake Control
+
+### Maximum Feed Intake (Original Lupatsch Model)
+
+**Equation (A.1)**
+$$FI_{max} = a \times BW^b \times e^{cT} \times I(T > T_{low}) \times I(T < T_{high})$$
+
+**Where:**
+
+- $FI_{max}$ = maximum feed intake (g/day)
+- $a, b, c, T_{low}, T_{high}$ = species-specific parameters
+- $BW$ = fish body weight (g)
+- $T$ = current temperature (°C)
+- $I$ = indicator function (returns 1 if true, 0 if false)
+
+### Maximum Feed Intake (Smooth Approximation)
+
+**Equation (A.2)**
+$$FI_{max} = a \times BW^b \times e^{cT} \times \frac{1}{1 + \left(\frac{T_{low}}{T}\right)^\beta} \times \frac{1}{1 + \left(\frac{T}{T_{high}}\right)^\beta}$$
+
+### Actual Feed Intake
+
+**Equation (A.3)**
+$$FI = \min(FI_{max}, feed_{given})$$
+
+-----
+
+## 4. Gut Compartment - Digestion and Absorption
+
+### Digestible Nutrient Intake
+
+**Equation (A.4)**
+$$DI_{nutrient} = \frac{FI \times ADC_{nutrient} \times feed_{nutrient}}{Mw_{nutrient}}$$
+
+**Where:**
+
+- $DI_{nutrient}$ = digestible intake of a nutrient per unit time (mol/day)
+- $ADC_{nutrient}$ = apparent digestibility coefficient of the nutrient
+- $feed_{nutrient}$ = percentage of nutrient in the feed
+- $Mw_{nutrient}$ = molecular weight of the nutrient
+
+### Digestion Rate (Second-order Kinetics)
+
+**Equation (A.5)**
+$$digestion_{nutrient} = k_{digestion} \times enzyme \times digestible_{nutrient}$$
+
+### Absorption Rate (Second-order Kinetics)
+
+**Equation (A.6)**
+$$absorption_{nutrient} = k_{absorption} \times receptor \times digested_{nutrient}$$
+
+### Enzyme Dynamics
+
+**Equation (A.7)**
+$$\frac{d(enzyme)}{dt} = \left( k_{enz\_prod} \times \sum_{nutrient} digestible_{nutrient} \right) - k_{enz\_deg} \times enzyme$$
+
+**Where:**
+
+- $k_{enz\_prod}$ = enzyme production rate constant
+- $k_{enz\_deg}$ = enzyme degradation rate constant
+
+### Receptor Dynamics
+
+**Equation (A.8)**
+$$\frac{d(receptor)}{dt} = \left( k_{rec\_prod} \times \sum_{nutrient} digested_{nutrient} \right) - k_{rec\_deg} \times receptor$$
+
+**Where:**
+
+- $k_{rec\_prod}$ = receptor production rate constant
+- $k_{rec\_deg}$ = receptor degradation rate constant
+
+-----
+
+## 5. Body Weight and Composition
+
+### Total Protein (Amino Acid Equivalents)
+
+**Equation (A.9)**
+$$protein_{total} = \sum_{i=1}^{20} protein_{AA_i} \times AA\_Mw_i$$
+
+**Where:**
+
+- $protein_{AA_i}$ = mass of the i-th amino acid in body protein pool (mol)
+- $AA\_Mw_i$ = molecular weight of the i-th amino acid (g/mol)
+
+### Total Lipids
+
+**Equation (A.10)**
+$$lipid_{total} = \sum_{i=1}^{20} (TAG\_body\_FA_i + TAG\_blood\_FA_i) \times FA\_Mw_i$$
+
+**Where:**
+
+- $TAG\_body\_FA_i$ = mass of i-th fatty acid in body lipids pool (mol)
+- $TAG\_blood\_FA_i$ = mass of i-th fatty acid in blood lipids pool (mol)
+- $FA\_Mw_i$ = molecular weight of i-th fatty acid (g/mol)
+
+### Crude Lipids Control Variable (CLq)
+
+**Equation (A.11)**
+$$CL_q = \frac{1}{1 + \left(\frac{lipid_{ref}}{lipid_{total}}\right)^\beta}$$
+
+**Where:**
+
+- $lipid_{ref}$ = reference lipid level (interpolated based on fasting state between min and max reference values)
+- $\beta$ = shape parameter
+
+-----
+
+## 6. Energetic Model
+
+### ATP Expenditure
+
+**Equation (A.12)**
+$$ATP_{exp} = ATP_{cost\_anab} + \left(1 + fed_{scaling} \times feed\_cost\_scale\right) \times ATP_{cost\_basal}(BW, T)$$
+
+**Where:**
+
+- $ATP_{cost\_anab}$ = ATP costs from anabolic reactions
+- $fed_{scaling}$ = value [0,1] representing fed state
+- $feed\_cost\_scale$ = parameter controlling feeding costs
+- $ATP_{cost\_basal}(BW, T)$ = basal energy costs
+
+### Required ATP from Oxidation
+
+**Equation (A.13)**
+$$ATP_{req} = ATP_{exp} - ATP_{prod\_catab} - ATP_{prod\_glucox}$$
+
+**Where:**
+
+- $ATP_{prod\_catab}$ = ATP from energy-yielding metabolite conversion
+- $ATP_{prod\_glucox}$ = ATP from glucose oxidation
+
+### Amino Acid vs Fatty Acid Oxidation Balance
+
+**Equation (A.14)**
+$$m_{ox\_AA} = \frac{1 - CL_q}{CL_q} \times m_{ox\_FA}$$
+
+### Total ATP from Oxidation
+
+**Equation (A.15)**
+$$ATP_{req} = m_{ox\_AA} \times ATP_{stoich\_AA} + m_{ox\_FA} \times ATP_{stoich\_FA}$$
+
+**Where:**
+
+- $ATP_{stoich\_AA}$ = profile-dependent ATP yield from amino acid oxidation (mol ATP/g)
+- $ATP_{stoich\_FA}$ = profile-dependent ATP yield from fatty acid β-oxidation (mol ATP/g)
+
+### Mass of Amino Acids Oxidized
+
+**Equation (A.16)**
+$$m_{ox\_AA} = \frac{ATP_{req}}{\frac{CL_q}{1-CL_q} \times ATP_{stoich\_FA} + ATP_{stoich\_AA}}$$
+
+### Adjusted Amino Acid Oxidation
+
+**Equation (A.17)**
+$$m_{ox\_AA} = \max\left( \frac{ATP_{req}}{\frac{CL_q}{1-CL_q} \times ATP_{stoich\_FA} + ATP_{stoich\_AA}}, \quad min\_AA\_loss \right)$$
+
+### Fatty Acid Beta-Oxidation Rate
+
+**Equation (A.18)**
+$$m_{ox\_FA} = \frac{ATP_{req} - ATP_{AA\_ox}}{ATP_{stoich\_FA}}$$
+
+**Where:**
+
+- $ATP_{AA\_ox}$ = ATP generated from amino acid oxidation
+
+-----
+
+## 7. Nitrogen Metabolism
+
+### 7.1 Protein Synthesis
+
+#### Maximum Protein Synthesis Rate
+
+**Equation (A.19)**
+$$max\_prot_{synth} = \min\left( k_{RNA} \times vs_T \times C_s \times protein_{total}, \quad lim\_prot_{synth} \right)$$
+
+**Where:**
+
+- $lim\_prot_{synth}$ = maximum rate limited by available substrate (free amino acids)
+- $k_{RNA}$ = translation rate
+- $vs_T$ = temperature effect on protein synthesis
+- $C_s$ = transcription rate (RNA quantity per gram protein)
+
+#### Temperature Effect on Protein Synthesis
+
+**Equation (A.20)**
+$$vs_T = temperature_{effect} \times T$$
+
+#### Ribosome Activation
+
+**Equation (A.21)**
+$$ribo_{activation} = k_{ribo} \times ribo_{occupied} \times valve_{activation}$$
+
+#### Ribosome Deactivation
+
+**Equation (A.22)**
+$$ribo_{deactivation} = k_{ribo} \times ribo_{unoccupied} \times valve_{deactivation}$$
+
+#### Ribosome Dynamics
+
+**Equation (A.23)**
+$$\frac{d(ribo_{occupied})}{dt} = ribo_{deactivation} - ribo_{activation}$$
+
+**Equation (A.24)**
+$$\frac{d(ribo_{unoccupied})}{dt} = ribo_{activation} - ribo_{deactivation}$$
+
+#### Ribosome Activity
+
+**Equation (A.25)**
+$$ribo_{act} = \frac{ribo_{unoccupied}}{ribo_{occupied} + ribo_{unoccupied}}$$
+
+#### Translation Rate (kRNA)
+
+**Equation (A.26)**
+$$k_{RNA} = e^{(1-ribo_{act}) \times \ln(k_{RNA\_min}) + ribo_{act} \times \ln(k_{RNA\_max})}$$
+
+#### Protein Synthesis Regulator
+
+**Equation (A.27)**
+$$prot\_synt_{regulator} = 0.05 + 0.95 \times \min\left(1, \max(0, CL_q + fed - starving)\right)$$
+
+#### Amino Acid Synthesis Valve
+
+**Equation (A.28)**
+$$AA\_synt_{valv} = \min\left( \frac{1}{1 + \frac{1}{\left(\frac{AA_{free}}{ref_{AA\_free}}\right)^{AA\_synt\_beta}}} \right)$$
+
+#### Actual Protein Synthesis Rate
+
+**Equation (A.29)**
+$$A\_prot_{synth} = max\_prot_{synth} \times prot\_synt_{regulator} \times AA\_synt_{valv}$$
+
+-----
+
+### 7.2 Protein Degradation
+
+#### Maximum Protein Degradation
+
+**Equation (A.30)**
+$$max_{prot\_deg} = k_{deg} \times deg\_temp\_factor \times protein_{total}$$
+
+#### Temperature Effect on Degradation
+
+**Equation (A.31)**
+$$deg\_temp\_factor = V_{db} + V_{dm} \times (temperature - T_{optimal})^2$$
+
+**Where:**
+
+- $V_{db}$, $V_{dm}$ = parameters
+- $T_{optimal}$ = optimal temperature
+
+#### Minimum Protein Degradation
+
+**Equation (A.32)**
+$$min\_prot_{deg} = prot\_deg\_min\_factor \times min\_AA\_loss$$
+
+#### Amino Acid Degradation Valve
+
+**Equation (A.33)**
+$$AA\_deg_{valv} = \min\left( \frac{1}{1 + \left(\frac{AA_{free}}{ref_{AA\_free}}\right)^{AA\_deg\_beta\_2}} \right)^{AA\_deg\_beta\_1}$$
+
+#### Actual Protein Degradation
+
+**Equation (A.34)**
+$$prot_{deg} = min_{prot\_deg} + (max_{prot\_deg} - min_{prot\_deg}) \times AA\_deg_{valv}$$
+
+-----
+
+### 7.3 Amino Acid Oxidation
+
+#### Minimum Amino Acid Loss (Fasting Maintenance)
+
+**Equation (A.35)**
+$$min\_AA\_loss = req\_prot\_a \times e^{req\_prot\_b \times temperature} \times \left(\frac{bw}{1000}\right)^{req\_prot\_c}$$
+
+**Where:**
+
+- $req\_prot\_a$, $req\_prot\_b$, $req\_prot\_c$ = parameters
+
+#### Normalized Free Amino Acids
+
+**Equation (A.36)**
+$$AA\_free\_max\_norm = \frac{AA_{free}}{max\_ref_{AA\_free}}$$
+
+**Equation (A.37)**
+$$AA\_free\_min\_norm = \frac{AA_{free}}{min\_ref_{AA\_free}}$$
+
+#### Amino Acid Oxidation Valve
+
+**Equation (A.38)**
+$$AA\_ox_{valv} = \min\left( \frac{AA\_free\_max\_norm}{\sum AA\_free\_max\_norm}, \frac{AA\_free\_min\_norm}{\sum AA\_free\_min\_norm} \right)$$
+
+#### Oxidation Weights
+
+**Equation (A.39)**
+$$AA\_ox_{weights} = \frac{AA\_ox_{valv}}{\sum AA\_ox_{valv}}$$
+
+#### Amino Acid Oxidation Rate
+
+**Equation (A.40)**
+$$AA\_ox_{rate} = AA\_ox_{weights} \times m_{ox\_AA}$$
+
+-----
+
+### 7.4 Gluconeogenesis
+
+#### Maximum Gluconeogenesis Rate
+
+**Equation (A.41)**
+$$V_{max\_gluconeo} = \min\left( AA\_gluco_{weights} \times stoich_{glucose_{AA \rightarrow glc}} \times a_{gluconeo} \times bw \times e^{b \times temperature}, \quad stoich_{glucose_{AA \rightarrow glc}} \times \frac{AA_{free}}{timestep} \right)$$
+
+#### Actual Gluconeogenesis Rate
+
+**Equation (A.42)**
+$$V_{gluconeo} = V_{max\_gluconeo} \times \frac{1}{1 + \frac{glucose}{ref_{glucose}}} \times AA\_gluco_{weights}$$
+
+-----
+
+### 7.5 Non-Essential Amino Acid Synthesis
+
+Reactions use glucose as carbon source. Nitrogen balance constraint: N incorporated ≤ N lost during timestep. Stoichiometries based on Olsen (1989).
+
+Special conversions:
+
+- Methionine → Cysteine
+- Phenylalanine → Tyrosine
+
+-----
+
+## 8. Carbon Metabolism
+
+### 8.1 Glucose Oxidation
+
+#### Maximum Glucose Oxidation
+
+**Equation (A.43)**
+$$V_{max\_glucox} = \min\left( a_{glucox} \times bw \times e^{b \times temperature}, \quad \frac{glucose}{timestep} \right)$$
+
+-----
+
+### 8.2 Glycogenesis and Glycogenolysis
+
+#### Maximum Glycogen Turnover Rate
+
+**Equation (A.44)**
+$$V_{max\_glycogen} = constant \times protein_{total}$$
+
+-----
+
+### 8.3 Lipogenesis
+
+#### Maximum Lipogenesis Rate
+
+**Equation (A.45)**
+$$V_{max\_lipogen} = \min\left( a_{lipogen} \times bw \times e^{b \times temperature}, \quad \frac{glucose}{timestep} \right)$$
+
+-----
+
+### 8.4 Beta-Oxidation
+
+#### Fatty Acid Beta-Oxidation
+
+**Equation (A.46)**
+$$TAG_{betox} = TAG\_ox_{weights} \times m_{ox\_FA}$$
+
+-----
+
+## 9. Performance Indicators
+
+### Relative Growth Rate (RGR)
+
+$$RGR = \left( e^{\frac{\ln(ABW_{i+n}) - \ln(ABW_i)}{day_{i+n} - day_i}} - 1 \right) \times 100$$
+
+**Where:**
+
+- $ABW$ = average body weight (g)
+- $RGR$ = relative growth rate (%/day)
+
+-----
+
+## 10. Calibration Data Ranges
+
+|Attribute                 |Unit    |Gilthead Seabream|European Seabass|Atlantic Salmon|Rainbow Trout|Nile Tilapia|
+|--------------------------|--------|-----------------|----------------|---------------|-------------|------------|
+|Nr. of data sources       |-       |19               |37              |61             |33           |44          |
+|Nr. of observational units|-       |118              |126             |398            |110          |186         |
+|Nr. of diets              |-       |30               |66              |350            |58           |175         |
+|Body weight range         |g       |1–478            |5–482           |1–6645         |2–2080       |1–559       |
+|Temperature range         |°C      |11–28            |18–26           |4–20           |4–19         |18–30       |
+|**Diet composition:**     |        |                 |                |               |             |            |
+|Crude protein             |% as fed|37–58            |37–56           |29–54          |26–58        |23–46       |
+|Crude lipids              |% as fed|9–23             |10–31           |10–47          |6–31         |3–15        |
+|Gross energy              |MJ/kg   |19–23            |18–25           |18–29          |17–26        |13–21       |
+|DP/DE                     |g/MJ    |21–26            |19–30           |12–26          |11–28        |14–26       |
+
+-----
+
+## Key Model Constants and Parameters
+
+### General Parameters
+
+|Symbol |Description                        |Unit         |Notes         |
+|-------|-----------------------------------|-------------|--------------|
+|$BW$   |Fish body weight                   |g            |State variable|
+|$T$    |Water temperature                  |°C           |Input         |
+|$FI$   |Feed intake                        |g/day        |Calculated    |
+|$ADC$  |Apparent digestibility coefficient |% or fraction|Input         |
+|$\beta$|Shape parameter (various equations)|-            |Calibrated    |
+
+### Energy Parameters
+
+|Symbol             |Description                        |Unit            |Notes            |
+|-------------------|-----------------------------------|----------------|-----------------|
+|$ATP_{stoich\_AA}$|ATP yield from amino acid oxidation|mol ATP/g       |Profile-dependent|
+|$ATP_{stoich\_FA}$|ATP yield from fatty acid oxidation|mol ATP/g       |Profile-dependent|
+|Max ATP expenditure|Upper physiological limit          |600 µmol·g⁻¹·h⁻¹|Fixed            |
+
+### Time Resolution
+
+|Parameter         |Value                    |
+|------------------|-------------------------|
+|Model timestep    |0.01 days (~14.4 minutes)|
+|Integration method|Forward Euler            |
+|Software          |Powersim Studio 10 Expert|
+
+-----
+
+## Model Compartments
 
 ```
-C = R + A + SDA + F + U + G
+┌─────────────────────────────────────────────────────────────────┐
+│                         FARM MODEL                               │
+│  (Population management, feeding regime, economic indicators)   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                         FISH MODEL                               │
+│                                                                  │
+│  ┌──────────┐    ┌──────────┐    ┌──────────────────────────┐  │
+│  │   GUT    │───▶│  BLOOD   │───▶│         BODY             │  │
+│  │          │    │          │◀───│ (liver, muscle, brain,   │  │
+│  │ Digestion│    │ Transport│    │  adipose tissue, bone)   │  │
+│  │Absorption│    │Regulation│    │                          │  │
+│  └──────────┘    └──────────┘    │ • Protein synthesis      │  │
+│                                  │ • Protein degradation    │  │
+│                                  │ • AA oxidation           │  │
+│                                  │ • Gluconeogenesis        │  │
+│                                  │ • Lipogenesis            │  │
+│                                  │ • Beta-oxidation         │  │
+│                                  └──────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-veya basitleştirilmiş formu:
+-----
 
-```
-C = G + (M + SDA) + F + U
-```
+## Species Calibrated
 
-### Değişkenler:
+|Species          |Scientific Name        |MAPE (Validation)|
+|-----------------|-----------------------|-----------------|
+|Gilthead seabream|*Sparus aurata*        |12.6%            |
+|European seabass |*Dicentrarchus labrax* |11.7%            |
+|Atlantic salmon  |*Salmo salar*          |11.7%            |
+|Rainbow trout    |*Oncorhynchus mykiss*  |13.8%            |
+|Nile tilapia     |*Oreochromis niloticus*|12.9%            |
 
-| Değişken | Açıklama | Birim |
-|----------|----------|-------|
-| **C** | Tüketim (Consumption) - Alınan enerji | J/gün |
-| **R** | Bazal/Standart metabolizma (Respiration) | J/gün |
-| **A** | Aktif metabolizma - Hareket için enerji | J/gün |
-| **SDA** | Spesifik Dinamik Aksiyon - Sindirim maliyeti | J/gün |
-| **F** | Dışkı ile atım (Egestion/Fecal) | J/gün |
-| **U** | İdrar ile atım (Excretion/Urinary) | J/gün |
-| **G** | Büyüme (Growth) - Somatik ve/veya gonadal | J/gün |
-| **M** | Toplam metabolizma (M = R + A) | J/gün |
+-----
 
-### Formül İlişkileri:
+## License & Citation
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                    ENERJİ GİRİŞİ (C)                         │
-│                         ↓                                     │
-│    ┌─────────────┬─────────────┬─────────────┐               │
-│    ↓             ↓             ↓             ↓               │
-│ Metabolizma   Sindirim      Atıklar      BÜYÜME (G)          │
-│ (R + A)       (SDA)         (F + U)         │                │
-│                                              ↓                │
-│                                    ┌─────────────────┐       │
-│                                    │ Protein (Pd)    │       │
-│                                    │ Lipit (Ld)      │       │
-│                                    │ Karbonhidrat    │       │
-│                                    └─────────────────┘       │
-└──────────────────────────────────────────────────────────────┘
+This document summarizes the mathematical formulations from:
+
+```bibtex
+@article{soares2023feednetics,
+  title={Development and Application of a Mechanistic Nutrient-Based Model for Precision Fish Farming},
+  author={Soares, Filipe M.R.C. and Nobre, Ana M.D. and Raposo, Andreia I.G. and
+          Mendes, Rodrigo C.P. and Engrola, Sofia A.D. and Rema, Paulo J.A.P. and
+          Conceição, Luís E.C. and Silva, Tomé S.},
+  journal={Journal of Marine Science and Engineering},
+  volume={11},
+  number={3},
+  pages={472},
+  year={2023},
+  publisher={MDPI},
+  doi={10.3390/jmse11030472}
+}
 ```
 
----
-
-## 2. Büyüme Oranı Formülleri
-
-### 2.1 Spesifik Büyüme Oranı (SGR - Specific Growth Rate)
-
-```
-SGR = (e^g - 1) × 100
-
-g = [ln(W₂) - ln(W₁)] / (t₂ - t₁)
-```
-
-veya yaygın form:
-
-```
-SGR = [(ln(W_final) - ln(W_initial)) / gün] × 100
-```
-
-### Değişkenler:
-
-| Değişken | Açıklama | Birim |
-|----------|----------|-------|
-| **SGR** | Spesifik Büyüme Oranı | %/gün |
-| **W₁, W₂** | Başlangıç ve bitiş ağırlıkları | g |
-| **t₁, t₂** | Başlangıç ve bitiş zamanları | gün |
-| **g** | Anlık büyüme oranı | 1/gün |
-
-### 2.2 Termal Büyüme Katsayısı (TGC - Thermal Growth Coefficient)
-
-```
-TGC = [(W_final^(1/3) - W_initial^(1/3)) / Σ(T × gün)] × 1000
-```
-
-veya alternatif form:
-
-```
-TGC = (W₂^(1/3) - W₁^(1/3)) / (derece-gün)
-```
-
-### Değişkenler:
-
-| Değişken | Açıklama | Birim |
-|----------|----------|-------|
-| **TGC** | Termal Büyüme Katsayısı | birimsiz |
-| **W_initial** | Başlangıç ağırlığı | g |
-| **W_final** | Final ağırlık | g |
-| **T** | Ortalama günlük su sıcaklığı | °C |
-| **derece-gün** | Sıcaklık × zaman toplamı | °C·gün |
-
-### 2.3 TGC ve SGR İlişkisi
-
-TGC, SGR'nin fonksiyonu olarak ifade edilebilir:
-- SGR sıcaklığa ve başlangıç ağırlığına bağımlıdır
-- TGC bu bağımlılıkları normalize eder
-
----
-
-## 3. Diferansiyel Büyüme Denklemi
-
-### Von Bertalanffy Büyüme Denklemi
-
-```
-dW/dt = a₁·W^m - b·W^n
-```
-
-veya genel metabolik form:
-
-```
-dm/dt = H·m^A - K·m^B
-```
-
-### Değişkenler:
-
-| Değişken | Açıklama | Tipik Değer |
-|----------|----------|-------------|
-| **W, m** | Vücut kütlesi | g |
-| **t** | Zaman | gün |
-| **a₁** | Anabolik (enerji kazanım) katsayısı | türe özgü |
-| **b** | Katabolik (enerji kaybı) katsayısı | türe özgü |
-| **m** | Anabolik üs (metabolik yüzey) | ~0.67-0.75 |
-| **n** | Katabolik üs | ~1.0 |
-| **H** | Sentez (yapım) oranı | türe özgü |
-| **K** | Yıkım oranı | türe özgü |
-| **A** | Anabolik metabolik üs | 2/3 |
-| **B** | Katabolik metabolik üs | 1 |
-
-### Fiziksel Anlam:
-
-- **a₁·W^m**: Enerji kazanım oranı (yem alımı, sindirim, absorpsiyon)
-- **b·W^n**: Enerji kaybı oranı (solunum, aktivite, atık)
-- **dW/dt > 0**: Büyüme gerçekleşiyor
-- **dW/dt = 0**: Bakım durumu (büyüme yok)
-- **dW/dt < 0**: Ağırlık kaybı
-
----
-
-## 4. Protein ve Lipit Biriktirme Formülleri
-
-### 4.1 Protein Biriktirme (Pd - Protein Deposition)
-
-```
-Pd = Pd_max × (1 - e^(-k_p × (DPI - DPI_maintenance)))
-```
-
-Çipura (*Sparus aurata*) için spesifik model:
-
-```
-PD = 2.97 × (1 - e^(-0.152 × (DPI - 1.393)))
-```
-
-### Değişkenler:
-
-| Değişken | Açıklama | Birim |
-|----------|----------|-------|
-| **Pd** | Protein biriktirme oranı | g/gün |
-| **Pd_max** | Maksimum protein biriktirme | g/gün |
-| **DPI** | Sindirilebilir protein alımı | g·kg^(-0.7)·gün^(-1) |
-| **DPI_maintenance** | Bakım için protein ihtiyacı | g·kg^(-0.7)·gün^(-1) |
-| **k_p** | Protein biriktirme katsayısı | birimsiz |
-
-### 4.2 Lipit Biriktirme (Ld - Lipid Deposition)
-
-```
-Ld = (ME_intake - ME_maintenance - E_protein) / E_lipid
-```
-
-veya:
-
-```
-Ld = (DEI - ME_m - (Pd × e_p)) / e_l
-```
-
-### Değişkenler:
-
-| Değişken | Açıklama | Birim |
-|----------|----------|-------|
-| **Ld** | Lipit biriktirme oranı | g/gün |
-| **ME_intake** | Metabolize edilebilir enerji alımı | kJ/gün |
-| **ME_maintenance** | Bakım enerji ihtiyacı | kJ/gün |
-| **E_protein** | Protein sentezi için enerji | kJ/gün |
-| **e_p** | Protein biriktirme enerji maliyeti | kJ/g protein |
-| **e_l** | Lipit biriktirme enerji maliyeti | kJ/g lipit |
-
-### 4.3 Enerji Geri Kazanımı (ER - Energy Recovery)
-
-Çipura için:
-
-```
-ER = 173.1 × (1 - e^(-0.00407 × (DEI - 59.84)))
-```
-
-### Değişkenler:
-
-| Değişken | Açıklama | Birim |
-|----------|----------|-------|
-| **ER** | Enerji geri kazanımı | kJ·kg^(-0.82)·gün^(-1) |
-| **DEI** | Sindirilebilir enerji alımı | kJ·kg^(-0.82)·gün^(-1) |
-| **59.84** | Bakım enerji ihtiyacı | kJ·kg^(-0.82)·gün^(-1) |
-
----
-
-## 5. Bakım (Maintenance) Formülleri
-
-### 5.1 Enerji İçin Bakım İhtiyacı
-
-```
-ME_maintenance = a × W^b
-```
-
-Balıklarda tipik değerler:
-- **b ≈ 0.80** (metabolik ağırlık üssü)
-
-### 5.2 Protein İçin Bakım İhtiyacı
-
-```
-P_maintenance = a × W^0.70
-```
-
-### Değişkenler:
-
-| Değişken | Açıklama | Birim |
-|----------|----------|-------|
-| **ME_maintenance** | Bakım metabolik enerjisi | kJ/gün |
-| **P_maintenance** | Bakım protein ihtiyacı | g/gün |
-| **W** | Vücut ağırlığı | kg |
-| **a** | Türe özgü sabit | değişken |
-| **b** | Metabolik üs | 0.70-0.82 |
-
-### Çipura İçin Bakım Değerleri (Yaz Koşulları):
-
-| Parametre | Değer | Birim |
-|-----------|-------|-------|
-| Protein bakım | 1.393 | g·kg^(-0.7)·gün^(-1) |
-| Enerji bakım | 59.84 | kJ·kg^(-0.82)·gün^(-1) |
-
----
-
-## 6. Protein Tutulumu Verimliliği (PRE)
-
-```
-PRE (%) = 18.90 + 22.90 × [1 + (DPI × 6.63^(-1))^39.68]^(-1)
-```
-
-### Değişkenler:
-
-| Değişken | Açıklama | Birim |
-|----------|----------|-------|
-| **PRE** | Protein Tutulumu Verimliliği | % |
-| **DPI** | Sindirilebilir protein alımı | g·kg^(-0.7)·gün^(-1) |
-
-### PRE ve Büyüme İlişkisi:
-
-```
-Ağırlık kazancı (g/gün) = 1.86 + [6.09 × Pd (g/gün)]
-```
-
----
-
-## 7. Sıcaklık Etkisi Formülleri
-
-### 7.1 Arrhenius Tipi Sıcaklık Düzeltmesi
-
-```
-k(T) = k_ref × e^[Ta × (1/T_ref - 1/T)]
-```
-
-### 7.2 Q10 Yaklaşımı
-
-```
-k(T) = k_ref × Q10^((T - T_ref)/10)
-```
-
-### Değişkenler:
-
-| Değişken | Açıklama | Birim |
-|----------|----------|-------|
-| **k(T)** | Sıcaklığa bağlı oran sabiti | değişken |
-| **k_ref** | Referans sıcaklıkta oran sabiti | değişken |
-| **T** | Gerçek sıcaklık | K veya °C |
-| **T_ref** | Referans sıcaklık | K veya °C |
-| **Ta** | Arrhenius sıcaklığı | K |
-| **Q10** | 10°C artışta oran değişimi | birimsiz (~2-3) |
-
----
-
-## 8. Amino Asit Gereksinimleri
-
-### 8.1 Esansiyel Amino Asit (EAA) İhtiyacı
-
-EAA ihtiyacı şunlara bağlıdır:
-- Tür (trofik seviye)
-- Sıcaklık
-- Büyüme oranı
-- Protein sentez verimliliği
-
-### 8.2 Amino Asit Skoru
-
-```
-AAS = (Test proteindeki AA miktarı / Referans proteindeki AA miktarı) × 100
-```
-
----
-
-## 9. Atık Üretimi Formülleri
-
-### 9.1 Azot Atığı
-
-```
-N_waste = N_intake - N_retention
-
-N_intake = (Yem × Protein içeriği) / 6.25
-
-N_retention = (Balık N içeriği × Ağırlık kazancı)
-```
-
-### 9.2 Fosfor Atığı
-
-```
-P_waste = P_intake - P_retention
-```
-
-### Çipura Vücut Kompozisyonu:
-
-| Bileşen | Değer | Birim |
-|---------|-------|-------|
-| Azot | 28.5 | g·kg^(-1) vücut kütlesi |
-| Fosfor | 7.2 | g·kg^(-1) vücut kütlesi |
-
----
-
-## 10. Model Yapısı ve Formül Bağlantıları
-
-```
-                        ┌─────────────────────────────┐
-                        │     YEM KOMPOZİSYONU        │
-                        │  - Protein                  │
-                        │  - Lipit                    │
-                        │  - Karbonhidrat             │
-                        │  - Amino Asitler            │
-                        └──────────────┬──────────────┘
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                      SİNDİRİM VE ABSORPSIYON                     │
-│                                                                   │
-│  DPI = Protein alımı × Sindirilebilirlik                         │
-│  DEI = Enerji alımı × Sindirilebilirlik                          │
-│                                                                   │
-│  Sindirim kayıpları: F (dışkı)                                   │
-└──────────────────────────────────────┬───────────────────────────┘
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                     METABOLİK SÜREÇLER                           │
-│                                                                   │
-│  ┌─────────────────┐    ┌─────────────────┐                      │
-│  │ BAKIM           │    │ BÜYÜME          │                      │
-│  │                 │    │                 │                      │
-│  │ ME_m = a×W^0.82 │    │ Pd = f(DPI)     │                      │
-│  │ P_m = a×W^0.70  │    │ Ld = f(DEI-ME_m)│                      │
-│  └────────┬────────┘    └────────┬────────┘                      │
-│           │                      │                               │
-│           ▼                      ▼                               │
-│  ┌─────────────────────────────────────────┐                     │
-│  │         ENERJİ PAYLAŞIMI                │                     │
-│  │                                         │                     │
-│  │  DEI = ME_m + E_protein + E_lipid + SDA │                     │
-│  └─────────────────────────────────────────┘                     │
-│                                                                   │
-│  Metabolik kayıplar: U (idrar), CO2, NH3                         │
-└──────────────────────────────────────┬───────────────────────────┘
-                                       │
-                                       ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                      BÜYÜME ÇIKTISI                              │
-│                                                                   │
-│  dW/dt = Pd + Ld + ...                                           │
-│                                                                   │
-│  Vücut Kompozisyonu:                                             │
-│  - Protein içeriği                                               │
-│  - Lipit içeriği                                                 │
-│  - Nem                                                           │
-│  - Kül                                                           │
-└──────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 11. FEEDNETICS Modeli Özellikleri
-
-### Model Tipi
-- **Mekanistik Besin Bazlı Model** (Metabolik-flux modeli)
-- Deterministik diferansiyel denklemler
-- Bireysel düzeyde simülasyon + çiftlik ölçeğine ölçekleme
-
-### Kalibre Edilmiş Türler
-1. Çipura (*Sparus aurata*)
-2. Levrek (*Dicentrarchus labrax*)
-3. Atlantik Somon (*Salmo salar*)
-4. Gökkuşağı Alabalığı (*Oncorhynchus mykiss*)
-5. Nil Tilapyası (*Oreochromis niloticus*)
-
-### Model Performansı
-- **MAPE** (Ortalama Mutlak Yüzde Hatası): %11.7 - %13.8
-
-### Kullanım Alanları
-- Yem formülasyonu değerlendirme
-- Sıcaklık profili etkisi analizi
-- Uzun vadeli üretim performansı tahmini
-- Besleme stratejisi optimizasyonu
-
----
-
-## 12. Referanslar
-
-1. Soares, F.M.R.C., et al. (2023). "Development and Application of a Mechanistic Nutrient-Based Model for Precision Fish Farming." *J. Mar. Sci. Eng.* 11(3):472. [DOI: 10.3390/jmse11030472](https://www.mdpi.com/2077-1312/11/3/472)
-
-2. Lupatsch, I., et al. (1998). "Energy and protein requirements for maintenance and growth in gilthead seabream." *Aquaculture Nutrition* 4:165-173.
-
-3. Jobling, M. (2003). "The thermal growth coefficient (TGC) model of fish growth: a cautionary note." *Aquaculture Research* 34:581-584.
-
-4. Von Bertalanffy, L. (1957). "Quantitative laws in metabolism and growth." *The Quarterly Review of Biology* 32:217-231.
-
-5. Hartman, K.J. & Hayward, R.S. "Bioenergetics." Chapter 12 in *Fish Bioenergetics*.
-
----
-
-## Özet Tablo: Anahtar Formüller
-
-| # | Formül | Çıktı | Kullanım |
-|---|--------|-------|----------|
-| 1 | C = R + A + SDA + F + U + G | Enerji dengesi | Temel çerçeve |
-| 2 | SGR = (ln(W₂)-ln(W₁))/t × 100 | Büyüme oranı (%) | Performans ölçümü |
-| 3 | TGC = (W₂^⅓-W₁^⅓)/derece-gün | Normalleştirilmiş büyüme | Türler arası karşılaştırma |
-| 4 | dW/dt = a₁·W^m - b·W^n | Anlık büyüme | Dinamik simülasyon |
-| 5 | Pd = Pd_max×(1-e^(-k×(DPI-DPI_m))) | Protein biriktirme | Besin modelleme |
-| 6 | Ld = (DEI-ME_m-E_p)/e_l | Lipit biriktirme | Vücut kompozisyonu |
-| 7 | PRE = f(DPI) | Protein verimliliği | Yem değerlendirme |
-| 8 | ME_m = a×W^b | Bakım enerjisi | İhtiyaç hesaplama |
-
----
-
-*Bu belge, web kaynaklarından derlenen bilgilerle oluşturulmuştur. Tam formül ve parametre değerleri için orijinal makaleye başvurunuz.*
+**Original Article:** Open Access (CC BY 4.0)
+**Contact:** luisconceicao@sparos.pt
