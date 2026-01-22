@@ -31,7 +31,7 @@
 ### Mean Absolute Percentage Error (MAPE) - Calibration
 
 **Equation (1)**
-$$MAPE_{cal_{bw}}(\%) = \frac{100}{n} \sum_{i=1}^{n} \left| \frac{P_{bw_i} - O_{bw_i}}{O_{bw_i}} \right|$$
+$$MAPE_{cal_{bw}}(%) = \frac{100}{n} \sum_{i=1}^{n} \left| \frac{P_{bw_i} - O_{bw_i}}{O_{bw_i}} \right|$$
 
 **Where:**
 
@@ -58,7 +58,7 @@ $$WE_{CL} = \frac{1}{m} \sum_{j=1}^{m} \left( CL_{ref} - CL_{predicted} \right)^
 ### Mean Absolute Percentage Error (MAPE) - Validation
 
 **Equation (4)**
-$$MAPE_{val_{bw}}(\%) = \frac{100}{n} \sum_{i=1}^{n} \left| \frac{P_{bw_i} - O_{bw_i}}{O_{bw_i}} \right|$$
+$$MAPE_{val_{bw}}(%) = \frac{100}{n} \sum_{i=1}^{n} \left| \frac{P_{bw_i} - O_{bw_i}}{O_{bw_i}} \right|$$
 
 -----
 
@@ -141,22 +141,22 @@ $$absorption_{nutrient} = k_{absorption} \times receptor \times digested_{nutrie
 ### Enzyme Dynamics
 
 **Equation (A.7)**
-$$\frac{d(enzyme)}{dt} = \left( k_{enz\_prod} \times \sum_{nutrient} digestible_{nutrient} \right) - k_{enz\_deg} \times enzyme$$
+$$\frac{d(enzyme)}{dt} = \left( k_{enz_prod} \times \sum_{nutrient} digestible_{nutrient} \right) - k_{enz_deg} \times enzyme$$
 
 **Where:**
 
-- $k_{enz\_prod}$ = enzyme production rate constant
-- $k_{enz\_deg}$ = enzyme degradation rate constant
+- $k_{enz_prod}$ = enzyme production rate constant
+- $k_{enz_deg}$ = enzyme degradation rate constant
 
 ### Receptor Dynamics
 
 **Equation (A.8)**
-$$\frac{d(receptor)}{dt} = \left( k_{rec\_prod} \times \sum_{nutrient} digested_{nutrient} \right) - k_{rec\_deg} \times receptor$$
+$$\frac{d(receptor)}{dt} = \left( k_{rec_prod} \times \sum_{nutrient} digested_{nutrient} \right) - k_{rec_deg} \times receptor$$
 
 **Where:**
 
-- $k_{rec\_prod}$ = receptor production rate constant
-- $k_{rec\_deg}$ = receptor degradation rate constant
+- $k_{rec_prod}$ = receptor production rate constant
+- $k_{rec_deg}$ = receptor degradation rate constant
 
 -----
 
@@ -165,23 +165,23 @@ $$\frac{d(receptor)}{dt} = \left( k_{rec\_prod} \times \sum_{nutrient} digested_
 ### Total Protein (Amino Acid Equivalents)
 
 **Equation (A.9)**
-$$protein_{total} = \sum_{i=1}^{20} protein_{AA_i} \times AA\_Mw_i$$
+$$protein_{total} = \sum_{i=1}^{20} protein_{AA_i} \times AA_Mw_i$$
 
 **Where:**
 
 - $protein_{AA_i}$ = mass of the i-th amino acid in body protein pool (mol)
-- $AA\_Mw_i$ = molecular weight of the i-th amino acid (g/mol)
+- $AA_Mw_i$ = molecular weight of the i-th amino acid (g/mol)
 
 ### Total Lipids
 
 **Equation (A.10)**
-$$lipid_{total} = \sum_{i=1}^{20} (TAG\_body\_FA_i + TAG\_blood\_FA_i) \times FA\_Mw_i$$
+$$lipid_{total} = \sum_{i=1}^{20} (TAG_body_FA_i + TAG_blood_FA_i) \times FA_Mw_i$$
 
 **Where:**
 
-- $TAG\_body\_FA_i$ = mass of i-th fatty acid in body lipids pool (mol)
-- $TAG\_blood\_FA_i$ = mass of i-th fatty acid in blood lipids pool (mol)
-- $FA\_Mw_i$ = molecular weight of i-th fatty acid (g/mol)
+- $TAG_body_FA_i$ = mass of i-th fatty acid in body lipids pool (mol)
+- $TAG_blood_FA_i$ = mass of i-th fatty acid in blood lipids pool (mol)
+- $FA_Mw_i$ = molecular weight of i-th fatty acid (g/mol)
 
 ### Crude Lipids Control Variable (CLq)
 
@@ -200,58 +200,58 @@ $$CL_q = \frac{1}{1 + \left(\frac{lipid_{ref}}{lipid_{total}}\right)^\beta}$$
 ### ATP Expenditure
 
 **Equation (A.12)**
-$$ATP_{exp} = ATP_{cost\_anab} + \left(1 + fed_{scaling} \times feed\_cost\_scale\right) \times ATP_{cost\_basal}(BW, T)$$
+$$ATP_{exp} = ATP_{cost_{anab}} + \left(1 + fed_{scaling} \times feed_cost_scale\right) \times ATP_{cost_{basal}}(BW, T)$$
 
 **Where:**
 
-- $ATP_{cost\_anab}$ = ATP costs from anabolic reactions
+- $ATP_{cost_{anab}}$ = ATP costs from anabolic reactions
 - $fed_{scaling}$ = value [0,1] representing fed state
-- $feed\_cost\_scale$ = parameter controlling feeding costs
-- $ATP_{cost\_basal}(BW, T)$ = basal energy costs
+- $feed_cost_scale$ = parameter controlling feeding costs
+- $ATP_{cost_{basal}}(BW, T)$ = basal energy costs
 
 ### Required ATP from Oxidation
 
 **Equation (A.13)**
-$$ATP_{req} = ATP_{exp} - ATP_{prod\_catab} - ATP_{prod\_glucox}$$
+$$ATP_{req} = ATP_{exp} - ATP_{prod_{catab}} - ATP_{prod_{glucox}}$$
 
 **Where:**
 
-- $ATP_{prod\_catab}$ = ATP from energy-yielding metabolite conversion
-- $ATP_{prod\_glucox}$ = ATP from glucose oxidation
+- $ATP_{prod_{catab}}$ = ATP from energy-yielding metabolite conversion
+- $ATP_{prod_{glucox}}$ = ATP from glucose oxidation
 
 ### Amino Acid vs Fatty Acid Oxidation Balance
 
 **Equation (A.14)**
-$$m_{ox\_AA} = \frac{1 - CL_q}{CL_q} \times m_{ox\_FA}$$
+$$m_{ox_{AA}} = \frac{1 - CL_q}{CL_q} \times m_{ox_{FA}}$$
 
 ### Total ATP from Oxidation
 
 **Equation (A.15)**
-$$ATP_{req} = m_{ox\_AA} \times ATP_{stoich\_AA} + m_{ox\_FA} \times ATP_{stoich\_FA}$$
+$$ATP_{req} = m_{ox_{AA}} \times ATP_{stoich_{AA}} + m_{ox_{FA}} \times ATP_{stoich_{FA}}$$
 
 **Where:**
 
-- $ATP_{stoich\_AA}$ = profile-dependent ATP yield from amino acid oxidation (mol ATP/g)
-- $ATP_{stoich\_FA}$ = profile-dependent ATP yield from fatty acid β-oxidation (mol ATP/g)
+- $ATP_{stoich_{AA}}$ = profile-dependent ATP yield from amino acid oxidation (mol ATP/g)
+- $ATP_{stoich_{FA}}$ = profile-dependent ATP yield from fatty acid β-oxidation (mol ATP/g)
 
 ### Mass of Amino Acids Oxidized
 
 **Equation (A.16)**
-$$m_{ox\_AA} = \frac{ATP_{req}}{\frac{CL_q}{1-CL_q} \times ATP_{stoich\_FA} + ATP_{stoich\_AA}}$$
+$$m_{ox_{AA}} = \frac{ATP_{req}}{\frac{CL_q}{1-CL_q} \times ATP_{stoich_{FA}} + ATP_{stoich_{AA}}}$$
 
 ### Adjusted Amino Acid Oxidation
 
 **Equation (A.17)**
-$$m_{ox\_AA} = \max\left( \frac{ATP_{req}}{\frac{CL_q}{1-CL_q} \times ATP_{stoich\_FA} + ATP_{stoich\_AA}}, \quad min\_AA\_loss \right)$$
+$$m_{ox_{AA}} = \max\left( \frac{ATP_{req}}{\frac{CL_q}{1-CL_q} \times ATP_{stoich_{FA}} + ATP_{stoich_{AA}}}, \quad min_AA_loss \right)$$
 
 ### Fatty Acid Beta-Oxidation Rate
 
 **Equation (A.18)**
-$$m_{ox\_FA} = \frac{ATP_{req} - ATP_{AA\_ox}}{ATP_{stoich\_FA}}$$
+$$m_{ox_{FA}} = \frac{ATP_{req} - ATP_{AA_ox}}{ATP_{stoich_{FA}}}$$
 
 **Where:**
 
-- $ATP_{AA\_ox}$ = ATP generated from amino acid oxidation
+- $ATP_{AA_ox}$ = ATP generated from amino acid oxidation
 
 -----
 
@@ -262,11 +262,11 @@ $$m_{ox\_FA} = \frac{ATP_{req} - ATP_{AA\_ox}}{ATP_{stoich\_FA}}$$
 #### Maximum Protein Synthesis Rate
 
 **Equation (A.19)**
-$$max\_prot_{synth} = \min\left( k_{RNA} \times vs_T \times C_s \times protein_{total}, \quad lim\_prot_{synth} \right)$$
+$$max_prot_{synth} = \min\left( k_{RNA} \times vs_T \times C_s \times protein_{total}, \quad lim_prot_{synth} \right)$$
 
 **Where:**
 
-- $lim\_prot_{synth}$ = maximum rate limited by available substrate (free amino acids)
+- $lim_prot_{synth}$ = maximum rate limited by available substrate (free amino acids)
 - $k_{RNA}$ = translation rate
 - $vs_T$ = temperature effect on protein synthesis
 - $C_s$ = transcription rate (RNA quantity per gram protein)
@@ -302,22 +302,22 @@ $$ribo_{act} = \frac{ribo_{unoccupied}}{ribo_{occupied} + ribo_{unoccupied}}$$
 #### Translation Rate (kRNA)
 
 **Equation (A.26)**
-$$k_{RNA} = e^{(1-ribo_{act}) \times \ln(k_{RNA\_min}) + ribo_{act} \times \ln(k_{RNA\_max})}$$
+$$k_{RNA} = e^{(1-ribo_{act}) \times \ln(k_{RNA_{min}}) + ribo_{act} \times \ln(k_{RNA_{max}})}$$
 
 #### Protein Synthesis Regulator
 
 **Equation (A.27)**
-$$prot\_synt_{regulator} = 0.05 + 0.95 \times \min\left(1, \max(0, CL_q + fed - starving)\right)$$
+$$prot_{synt_{regulator}} = 0.05 + 0.95 \times \min\left(1, \max(0, CL_q + fed - starving)\right)$$
 
 #### Amino Acid Synthesis Valve
 
 **Equation (A.28)**
-$$AA\_synt_{valv} = \min\left( \frac{1}{1 + \frac{1}{\left(\frac{AA_{free}}{ref_{AA\_free}}\right)^{AA\_synt\_beta}}} \right)$$
+$$AA_{synt_{valv}} = \min\left( \frac{1}{1 + \frac{1}{\left(\frac{AA_{free}}{ref_{AA_{free}}}\right)^{AA_{synt_{beta}}}}} \right)$$
 
 #### Actual Protein Synthesis Rate
 
 **Equation (A.29)**
-$$A\_prot_{synth} = max\_prot_{synth} \times prot\_synt_{regulator} \times AA\_synt_{valv}$$
+$$A_{prot_{synth}} = max_prot_{synth} \times prot_{synt_{regulator}} \times AA_{synt_{valv}}$$
 
 -----
 
@@ -326,12 +326,12 @@ $$A\_prot_{synth} = max\_prot_{synth} \times prot\_synt_{regulator} \times AA\_s
 #### Maximum Protein Degradation
 
 **Equation (A.30)**
-$$max_{prot\_deg} = k_{deg} \times deg\_temp\_factor \times protein_{total}$$
+$$max_{prot_{deg}} = k_{deg} \times deg_{temp_factor} \times protein_{total}$$
 
 #### Temperature Effect on Degradation
 
 **Equation (A.31)**
-$$deg\_temp\_factor = V_{db} + V_{dm} \times (temperature - T_{optimal})^2$$
+$$deg_{temp_factor} = V_{db} + V_{dm} \times (temperature - T_{optimal})^2$$
 
 **Where:**
 
@@ -341,17 +341,17 @@ $$deg\_temp\_factor = V_{db} + V_{dm} \times (temperature - T_{optimal})^2$$
 #### Minimum Protein Degradation
 
 **Equation (A.32)**
-$$min\_prot_{deg} = prot\_deg\_min\_factor \times min\_AA\_loss$$
+$$min_prot_{deg} = prot_deg_min_factor \times min_AA_loss$$
 
 #### Amino Acid Degradation Valve
 
 **Equation (A.33)**
-$$AA\_deg_{valv} = \min\left( \frac{1}{1 + \left(\frac{AA_{free}}{ref_{AA\_free}}\right)^{AA\_deg\_beta\_2}} \right)^{AA\_deg\_beta\_1}$$
+$$AA_{deg_{valv}} = \min\left( \frac{1}{1 + \left(\frac{AA_{free}}{ref_{AA_{free}}}\right)^{AA_deg_beta_2}} \right)^{AA_deg_beta_1}$$
 
 #### Actual Protein Degradation
 
 **Equation (A.34)**
-$$prot_{deg} = min_{prot\_deg} + (max_{prot\_deg} - min_{prot\_deg}) \times AA\_deg_{valv}$$
+$$prot_{deg} = min_{prot_{deg}} + (max_{prot_{deg}} - min_{prot_{deg}}) \times AA_{deg_{valv}}$$
 
 -----
 
@@ -360,34 +360,34 @@ $$prot_{deg} = min_{prot\_deg} + (max_{prot\_deg} - min_{prot\_deg}) \times AA\_
 #### Minimum Amino Acid Loss (Fasting Maintenance)
 
 **Equation (A.35)**
-$$min\_AA\_loss = req\_prot\_a \times e^{req\_prot\_b \times temperature} \times \left(\frac{bw}{1000}\right)^{req\_prot\_c}$$
+$$min_AA_loss = req_prot_a \times e^{req_prot_b \times temperature} \times \left(\frac{bw}{1000}\right)^{req_prot_c}$$
 
 **Where:**
 
-- $req\_prot\_a$, $req\_prot\_b$, $req\_prot\_c$ = parameters
+- $req_prot_a$, $req_prot_b$, $req_prot_c$ = parameters
 
 #### Normalized Free Amino Acids
 
 **Equation (A.36)**
-$$AA\_free\_max\_norm = \frac{AA_{free}}{max\_ref_{AA\_free}}$$
+$$AA_free_max_norm = \frac{AA_{free}}{max_ref_{AA_{free}}}$$
 
 **Equation (A.37)**
-$$AA\_free\_min\_norm = \frac{AA_{free}}{min\_ref_{AA\_free}}$$
+$$AA_free_min_norm = \frac{AA_{free}}{min_ref_{AA_{free}}}$$
 
 #### Amino Acid Oxidation Valve
 
 **Equation (A.38)**
-$$AA\_ox_{valv} = \min\left( \frac{AA\_free\_max\_norm}{\sum AA\_free\_max\_norm}, \frac{AA\_free\_min\_norm}{\sum AA\_free\_min\_norm} \right)$$
+$$AA_{ox_{valv}} = \min\left( \frac{AA_free_max_norm}{\sum AA_free_max_norm}, \frac{AA_free_min_norm}{\sum AA_free_min_norm} \right)$$
 
 #### Oxidation Weights
 
 **Equation (A.39)**
-$$AA\_ox_{weights} = \frac{AA\_ox_{valv}}{\sum AA\_ox_{valv}}$$
+$$AA_{ox_{weights}} = \frac{AA_{ox_{valv}}}{\sum AA_{ox_{valv}}}$$
 
 #### Amino Acid Oxidation Rate
 
 **Equation (A.40)**
-$$AA\_ox_{rate} = AA\_ox_{weights} \times m_{ox\_AA}$$
+$$AA_ox_{rate} = AA_{ox_{weights}} \times m_{ox_{AA}}$$
 
 -----
 
@@ -396,12 +396,12 @@ $$AA\_ox_{rate} = AA\_ox_{weights} \times m_{ox\_AA}$$
 #### Maximum Gluconeogenesis Rate
 
 **Equation (A.41)**
-$$V_{max\_gluconeo} = \min\left( AA\_gluco_{weights} \times stoich_{glucose_{AA \rightarrow glc}} \times a_{gluconeo} \times bw \times e^{b \times temperature}, \quad stoich_{glucose_{AA \rightarrow glc}} \times \frac{AA_{free}}{timestep} \right)$$
+$$V_{max_{gluconeo}} = \min\left( AA_{gluco_{weights}} \times stoich_{glucose_{AA \rightarrow glc}} \times a_{gluconeo} \times bw \times e^{b \times temperature}, \quad stoich_{glucose_{AA \rightarrow glc}} \times \frac{AA_{free}}{timestep} \right)$$
 
 #### Actual Gluconeogenesis Rate
 
 **Equation (A.42)**
-$$V_{gluconeo} = V_{max\_gluconeo} \times \frac{1}{1 + \frac{glucose}{ref_{glucose}}} \times AA\_gluco_{weights}$$
+$$V_{gluconeo} = V_{max_{gluconeo}} \times \frac{1}{1 + \frac{glucose}{ref_{glucose}}} \times AA_{gluco_{weights}}$$
 
 -----
 
@@ -423,7 +423,7 @@ Special conversions:
 #### Maximum Glucose Oxidation
 
 **Equation (A.43)**
-$$V_{max\_glucox} = \min\left( a_{glucox} \times bw \times e^{b \times temperature}, \quad \frac{glucose}{timestep} \right)$$
+$$V_{max_{glucox}} = \min\left( a_{glucox} \times bw \times e^{b \times temperature}, \quad \frac{glucose}{timestep} \right)$$
 
 -----
 
@@ -432,7 +432,7 @@ $$V_{max\_glucox} = \min\left( a_{glucox} \times bw \times e^{b \times temperatu
 #### Maximum Glycogen Turnover Rate
 
 **Equation (A.44)**
-$$V_{max\_glycogen} = constant \times protein_{total}$$
+$$V_{max_{glycogen}} = constant \times protein_{total}$$
 
 -----
 
@@ -441,7 +441,7 @@ $$V_{max\_glycogen} = constant \times protein_{total}$$
 #### Maximum Lipogenesis Rate
 
 **Equation (A.45)**
-$$V_{max\_lipogen} = \min\left( a_{lipogen} \times bw \times e^{b \times temperature}, \quad \frac{glucose}{timestep} \right)$$
+$$V_{max_{lipogen}} = \min\left( a_{lipogen} \times bw \times e^{b \times temperature}, \quad \frac{glucose}{timestep} \right)$$
 
 -----
 
@@ -450,7 +450,7 @@ $$V_{max\_lipogen} = \min\left( a_{lipogen} \times bw \times e^{b \times tempera
 #### Fatty Acid Beta-Oxidation
 
 **Equation (A.46)**
-$$TAG_{betox} = TAG\_ox_{weights} \times m_{ox\_FA}$$
+$$TAG_{betox} = TAG_{ox_{weights}} \times m_{ox_{FA}}$$
 
 -----
 
@@ -500,8 +500,8 @@ $$RGR = \left( e^{\frac{\ln(ABW_{i+n}) - \ln(ABW_i)}{day_{i+n} - day_i}} - 1 \ri
 
 |Symbol             |Description                        |Unit            |Notes            |
 |-------------------|-----------------------------------|----------------|-----------------|
-|$ATP_{stoich\_AA}$|ATP yield from amino acid oxidation|mol ATP/g       |Profile-dependent|
-|$ATP_{stoich\_FA}$|ATP yield from fatty acid oxidation|mol ATP/g       |Profile-dependent|
+|$ATP_{stoich_{AA}}$|ATP yield from amino acid oxidation|mol ATP/g       |Profile-dependent|
+|$ATP_{stoich_{FA}}$|ATP yield from fatty acid oxidation|mol ATP/g       |Profile-dependent|
 |Max ATP expenditure|Upper physiological limit          |600 µmol·g⁻¹·h⁻¹|Fixed            |
 
 ### Time Resolution
