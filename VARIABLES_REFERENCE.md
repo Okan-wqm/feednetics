@@ -513,6 +513,7 @@ import {
   GlycogenParams,
   PerformanceData,
   PerformanceMetrics,
+  ObservedPredicted,
 
   // Constants
   AA_MOLECULAR_WEIGHTS,
