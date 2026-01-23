@@ -14,6 +14,35 @@
  * - performance: Performance indicators (RGR, SGR, FCR, etc.)
  */
 
+// Re-export all types from types.ts
+export {
+  AminoAcidId,
+  FattyAcidId,
+  FishSpecies,
+  TemperatureInput,
+  FeedProperties,
+  ModelInputs,
+  FeedIntakeParams,
+  ProteinMetabolismParams,
+  EnergyMetabolismParams,
+  AAMaintenanceParams,
+  GluconeogenesisParams,
+  GlucoseOxidationParams,
+  LipogenesisParams,
+  SpeciesParams,
+  GutState,
+  BodyComposition,
+  RibosomeState,
+  FishState,
+  ValidationMetrics,
+  PerformanceIndicators,
+  MetabolicFluxes,
+  ATPBalance,
+  SimulationOutput,
+  AA_MOLECULAR_WEIGHTS,
+  MODEL_TIMESTEP
+} from '../types';
+
 // Calibration metrics (Equations 1-4)
 export {
   calculateMAPE,

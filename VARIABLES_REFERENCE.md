@@ -399,7 +399,7 @@
 |----------|-------|------|-------------|
 | `ATP_PER_GLUCOSE` | 32 | mol ATP/mol | Glukoz oksidasyonundan ATP |
 | `GLUCOSE_PER_PALMITATE` | 4 | mol/mol | Lipogenezde glukoz/palmitat |
-| `MAX_ATP_EXPENDITURE` | 600×10⁻⁶ | mol/g/h | Maksimum ATP harcama limiti |
+| `MAX_ATP_EXPENDITURE_PER_G_PER_HOUR` | 600×10⁻⁶ | mol/g/h | Maksimum ATP harcama limiti |
 | `MODEL_TIMESTEP` | 0.01 | day | Model zaman adımı (~14.4 dk) |
 
 ---
@@ -497,7 +497,9 @@ import {
   AminoAcidId,
   FattyAcidId,
   FishSpecies,
+  TemperatureInput,
   FeedProperties,
+  ModelInputs,
   FeedIntakeParams,
   EnergyMetabolismParams,
   ProteinMetabolismParams,
@@ -505,6 +507,7 @@ import {
   GluconeogenesisParams,
   GlucoseOxidationParams,
   LipogenesisParams,
+  SpeciesParams,
   GutState,
   BodyComposition,
   RibosomeState,
@@ -514,6 +517,11 @@ import {
   PerformanceData,
   PerformanceMetrics,
   ObservedPredicted,
+  ValidationMetrics,
+  PerformanceIndicators,
+  MetabolicFluxes,
+  ATPBalance,
+  SimulationOutput,
 
   // Constants
   AA_MOLECULAR_WEIGHTS,
@@ -525,6 +533,7 @@ import {
   MAX_ATP_EXPENDITURE_PER_G_PER_HOUR,
   GLUCONEOGENESIS_STOICH,
   NEAA_SYNTHESIS_STOICH,
+  MODEL_TIMESTEP,
 
   // Calibration (Eq. 1-4)
   calculateMAPE,

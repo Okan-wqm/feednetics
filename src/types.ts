@@ -319,3 +319,6 @@ export interface SimulationOutput {
   feedIntake: number;
   performance: PerformanceIndicators;
 }
+
+/** Model time step (days) - approximately 14.4 minutes */
+export const MODEL_TIMESTEP = 0.01;
