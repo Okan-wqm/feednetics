@@ -179,6 +179,24 @@ const seabreamParams = {
 };
 ```
 
+5 türün kalibre edilmiş parametre seti `SPECIES_PARAMETERS` üzerinden
+kullanılabilir:
+
+```typescript
+import { getSpeciesParams } from 'feednetics';
+
+const seabream = getSpeciesParams('gilthead_seabream');
+const seabass  = getSpeciesParams('european_seabass');
+const salmon   = getSpeciesParams('atlantic_salmon');
+const trout    = getSpeciesParams('rainbow_trout');
+const tilapia  = getSpeciesParams('nile_tilapia');
+```
+
+`feedIntake` ve sıcaklık aralıkları tür-spesifiktir (Lupatsch ailesi
+yayınlardan). Diğer alt-gruplar (proteinMetabolism, energyMetabolism, vb.)
+şu anda paylaşılan baseline değerlerle dolu; tür-spesifik kalibrasyon
+Soares et al. (2023) makalesi tablolarından eklenecek.
+
 ---
 
 ## 4. Üretilen Sonuçlar

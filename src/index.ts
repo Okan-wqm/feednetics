@@ -24,3 +24,6 @@ export * from './types';
 
 // Export all formula modules
 export * from './formulas';
+
+// Export species calibration data
+export * from './data/speciesParameters';
