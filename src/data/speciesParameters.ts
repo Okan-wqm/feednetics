@@ -211,17 +211,25 @@ const AA_MAINTENANCE: Record<FishSpecies, AAMaintenanceParams> = {
 // 2-7 %/day of body protein (matches Houlihan 1995 fish data).
 // ============================================================================
 
-// k_RNA values (g protein synthesized / day / g RNA) calibrated from
-// Houlihan et al. 1995 Table 2 (Protein turnover and amino acid flux in
-// fish larvae). Marine carnivores (seabream, seabass) interpolated between
-// trout cold-water values and grass carp warm-water values.
+// k_RNA values (g protein synthesized / day / g RNA) from Houlihan et al.
+// 1995 Table 2 — meta-analysis combining Mathers et al. 1993 (trout fry),
+// McCarthy et al. unpubl. (trout 80g, 300g), Carter et al. 1993 (grass carp),
+// Carter et al. unpubl. (Atlantic salmon 175-200g).
+//
+// C_s values (g RNA / g protein) from Houlihan 1995 Table 5 SCALING equation:
+//   log₁₀(RNA:P, mg/g) = 1.315 - 0.163 × log₁₀(weight, g)
+// → For typical farmed fish (100-1000g): RNA:P = 7-10 mg/g = 0.007-0.010
+// (Fry have ~0.040-0.054, but adult farmed fish are ~0.010 — major correction
+//  from previous values which assumed fry ratios)
+//
 // Bar et al. 2007 Table 2 confirms T_optimal = 13°C for salmon and provides
 // ψ (protein degradation efficiency) range 0.2-0.85 for protDegMinFactor.
 
 const PROTEIN_METABOLISM: Record<FishSpecies, ProteinMetabolismParams> = {
   // Mediterranean ~22°C marine carnivore. k_RNA interpolated (Houlihan range).
+  // C_s from Houlihan Table 5 regression at typical farmed weight (~100g).
   gilthead_seabream: {
-    k_RNA_min: 0.80, k_RNA_max: 4.00, C_s: 0.040, temperatureEffect: 0.070,
+    k_RNA_min: 0.80, k_RNA_max: 4.00, C_s: 0.010, temperatureEffect: 0.070,
     k_ribo: 0.20, k_deg: 0.060,
     V_db: 0.040, V_dm: 0.002, T_optimal: 22,
     protDegMinFactor: 0.35,
@@ -229,7 +237,7 @@ const PROTEIN_METABOLISM: Record<FishSpecies, ProteinMetabolismParams> = {
   },
   // Marine carnivore, similar to seabream
   european_seabass: {
-    k_RNA_min: 0.80, k_RNA_max: 4.00, C_s: 0.040, temperatureEffect: 0.070,
+    k_RNA_min: 0.80, k_RNA_max: 4.00, C_s: 0.010, temperatureEffect: 0.070,
     k_ribo: 0.20, k_deg: 0.060,
     V_db: 0.040, V_dm: 0.002, T_optimal: 22,
     protDegMinFactor: 0.35,
@@ -238,8 +246,9 @@ const PROTEIN_METABOLISM: Record<FishSpecies, ProteinMetabolismParams> = {
   // Houlihan 1995 Table 2: salmon kRNA at 14°C = 2.25-3.78 (mean 3.0).
   // Starved value ~0.6 inferred from trout pattern. Bar 2007: T_opt=13°C ✓
   // Bar 2007 ψ range 0.2-0.85 → protDegMinFactor in 0.30-0.40 range.
+  // C_s from Houlihan Table 5 regression for ~200g fish.
   atlantic_salmon: {
-    k_RNA_min: 0.60, k_RNA_max: 3.00, C_s: 0.050, temperatureEffect: 0.100,
+    k_RNA_min: 0.60, k_RNA_max: 3.00, C_s: 0.009, temperatureEffect: 0.100,
     k_ribo: 0.20, k_deg: 0.040,
     V_db: 0.040, V_dm: 0.002, T_optimal: 13,
     protDegMinFactor: 0.30,
@@ -248,8 +257,9 @@ const PROTEIN_METABOLISM: Record<FishSpecies, ProteinMetabolismParams> = {
   // Houlihan 1995 Table 2: trout kRNA at 10°C: fed=2.45, starved=0.63 EXACT
   //                        at 14°C: fed=3.13, at 8°C: fed=3.94
   // Q10_P > 2 (Raposo Ch.6) → V_dm 2.5x higher than other species
+  // C_s from Houlihan Table 5 regression for ~150g fish.
   rainbow_trout: {
-    k_RNA_min: 0.63, k_RNA_max: 3.13, C_s: 0.050, temperatureEffect: 0.100,
+    k_RNA_min: 0.63, k_RNA_max: 3.13, C_s: 0.010, temperatureEffect: 0.100,
     k_ribo: 0.20, k_deg: 0.040,
     V_db: 0.040, V_dm: 0.005, T_optimal: 15,
     protDegMinFactor: 0.30,
@@ -257,8 +267,9 @@ const PROTEIN_METABOLISM: Record<FishSpecies, ProteinMetabolismParams> = {
   },
   // Houlihan 1995 Table 2: grass carp at 22°C (warm-water omnivore analog)
   // → kRNA fed=5.93, starved=1.87 (extrapolated to tilapia at 28°C with Q10=2)
+  // C_s slightly higher for tilapia (smaller adult market size, faster growth).
   nile_tilapia: {
-    k_RNA_min: 1.87, k_RNA_max: 5.93, C_s: 0.060, temperatureEffect: 0.080,
+    k_RNA_min: 1.87, k_RNA_max: 5.93, C_s: 0.012, temperatureEffect: 0.080,
     k_ribo: 0.20, k_deg: 0.050,
     V_db: 0.040, V_dm: 0.002, T_optimal: 28,
     protDegMinFactor: 0.25,
