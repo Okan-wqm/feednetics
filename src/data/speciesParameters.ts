@@ -18,11 +18,18 @@
  *     of metabolic body-weight exponents, k_E/k_P retention efficiencies,
  *     and Q10 (temperature) effects across all five species
  *
- * Parameter groups still held in shared baselines (TODO Soares et al. 2023):
+ * Parameter groups still held in shared baselines:
  *   proteinMetabolism, gluconeogenesis, glucoseOxidation, lipogenesis
- *   (these reflect the protein-flux and carbon-metabolism submodels whose
- *   per-species calibrated values appear only in the FEEDNETICS paper /
- *   its supplementary tables, which were not available)
+ *
+ * These reflect the protein-flux (k_RNA, V_db, AA betas) and carbon-
+ * metabolism (a_gluconeo, a_glucox, a_lipogen) submodels. The Soares et al.
+ * (2023) FEEDNETICS paper publishes the model EQUATIONS (Appendix A,
+ * eqs. A.1–A.46 — already implemented in src/formulas) and PERFORMANCE
+ * metrics (Table 2) but does NOT publish the calibrated species-specific
+ * coefficient values for these submodels. SPAROS Lda. retains them as
+ * proprietary parameters of the commercial FEEDNETICS product (EUROSTARS-2
+ * E!12516 funded). No supplementary materials, Zenodo, Figshare, or OSF
+ * record was found that publishes them.
  */
 
 import type {
@@ -50,8 +57,8 @@ const FEED_INTAKE: Record<FishSpecies, FeedIntakeParams> = {
   atlantic_salmon:   { a: 0.0060, b: 0.800, c: 0.050, T_low:  4, T_high: 20, beta: 1.0 },
   // Cho & Kaushik 1990 / Bureau 2003
   rainbow_trout:     { a: 0.0250, b: 0.700, c: 0.060, T_low:  4, T_high: 19, beta: 1.0 },
-  // Lupatsch 2010 (Oreochromis); Raposo et al. 2024 validation envelope
-  nile_tilapia:      { a: 0.0450, b: 0.700, c: 0.055, T_low: 21, T_high: 30, beta: 1.0 },
+  // Lupatsch 2010 (Oreochromis); Soares et al. 2023 Table 1 envelope (T 18–30 °C)
+  nile_tilapia:      { a: 0.0450, b: 0.700, c: 0.055, T_low: 18, T_high: 30, beta: 1.0 },
 };
 
 // ============================================================================
