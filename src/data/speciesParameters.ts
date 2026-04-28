@@ -8,36 +8,49 @@
  *   - Rainbow trout (Oncorhynchus mykiss)
  *   - Nile tilapia (Oreochromis niloticus)
  *
- * Primary sources used:
- *   - Nobre et al. 2019, Aquac. Eng. 84:12  — seabream EP model parametrisation
- *   - Lupatsch & Kissil 2001, Aquaculture 202:289 — seabass FM coefficients
- *   - Lupatsch et al. 2003a, Aquaculture 225:175  — feed intake values
- *   - Chowdhury et al. 2013, Aquaculture 410:138  — tilapia FM at 28 °C
- *   - Cho & Kaushik 1990 / Bureau & Cho 2003       — salmonid DE_m ranges
- *   - Raposo PhD thesis (ICBAS/U. Porto, 2024) Ch.6 — multi-species comparison
- *     of metabolic body-weight exponents, k_E/k_P retention efficiencies,
- *     and Q10 (temperature) effects across all five species
+ * ============================================================================
+ * AUDIT — provenance of each parameter (vs published sources):
+ * ============================================================================
  *
- * The protein-flux (k_RNA, V_db, AA betas) and carbon-metabolism
- * (a_gluconeo, a_glucox, a_lipogen) parameters are NOT published by SPAROS
- * Lda. (FEEDNETICS is a commercial product). For these groups we provide
- * BIOPHYSICALLY-DERIVED ESTIMATES, obtained by combining:
+ * EXACT match with published numbers:
+ *   ✓ seabream basalATP_{a,b,c}   = Nobre 2019 Table 1 FM_coef_E
+ *   ✓ seabream req_prot_{a,b,c}   = Nobre 2019 Table 1 FM_coef_P
+ *   ✓ seabass  req_prot_{a,c}     = Lupatsch & Kissil 2001 (T-indep)
+ *   ✓ tilapia  basalATP_{b,c}     = Chowdhury 2013 + Nobre 2019 c-transfer
+ *   ✓ tilapia  req_prot_{a,c}     = Chowdhury 2013 (T-indep at 28°C)
+ *   ✓ All  basalATP_b             = 0.80 (Lupatsch standard, Raposo Ch.6 confirms)
+ *   ✓ All  req_prot_c (most)      = 0.70 (Lupatsch standard)
  *
- *   1. Universal biophysical priors from independent protein-flux modelling
- *      (Bar et al. 2007, Conceição et al. 1998, Houlihan 1995)
- *   2. Per-species scaling using k_E, k_P retention efficiencies and Q10
- *      ranges from Raposo PhD thesis (2024) Chapter 6
- *   3. Documented species traits: trophic level, glucose tolerance, dietary
- *      carbohydrate utilisation (Maas et al. 2020, Stone 2010, NRC 2011)
+ * CITED — within published range or species-trait inference:
+ *   ◐ feedIntake (a, b, c)        = Lupatsch family / Bureau & Cho per species
+ *   ◐ T_low, T_high               = Soares 2023 Table 1 envelope
+ *   ◐ seabass, salmon, trout basalATP_a, c = Lupatsch 2001 / Cho-Kaushik 1990 /
+ *     Glencross + Raposo Ch.6 mid-range exp_E
+ *   ◐ salmon, trout req_prot_a, c, b = same family + Raposo Ch.6 Q10 finding
+ *   ◐ T_optimal per species        = published thermal preferences
  *
- * These estimates are NOT a substitute for the proprietary SPAROS calibration,
- * but provide internally-consistent species-specific values whose magnitudes
- * fall within published biophysical bounds and whose differential ordering
- * matches the species-specific physiology reported in the literature.
+ * DERIV — biophysically derived (no published value found):
+ *   ⊕ feedCostScale (SDA)         = Secor 2009 / Carter & Brafield 1992 ranges
+ *                                   (Soares 2023 Eq A.12: not k_E! It's the
+ *                                    SDA multiplier on basal ATP cost)
+ *   ⊕ proteinMetabolism (all)     = Bar 2007 priors + Raposo k_P scaling
+ *                                   Houlihan 1995 turnover bands (2-7%/d)
+ *   ⊕ gluconeogenesis (all)       = Maas 2020 / Stone 2010 / NRC 2011
+ *   ⊕ glucoseOxidation (all)      = same — glucose tolerance ordering
+ *   ⊕ lipogenesis (all)           = same — carb→fat conversion capacity
  *
- * For commercial / production use, replace these with values from a direct
- * SPAROS academic licence agreement or perform an independent CMA-ES
- * re-calibration following Soares et al. 2023 Section 2.2.2.
+ * The DERIV values are NOT calibrated SPAROS values — these are explicitly
+ * documented as biophysically-motivated estimates. The Soares 2023 paper
+ * publishes the model EQUATIONS (Appendix A.1-A.46) and PERFORMANCE metrics
+ * (Table 2) but withholds the calibrated coefficient values. SPAROS retains
+ * them as proprietary parameters of the commercial FEEDNETICS product.
+ *
+ * Smoke-tested: protein synthesis rates fall in 2-7%/day Houlihan 1995 band
+ * for all 5 species at typical (BW=100g, T=T_optimal) conditions.
+ *
+ * For commercial / production use, replace with values from a direct SPAROS
+ * academic licence agreement or perform independent CMA-ES re-calibration
+ * following Soares et al. 2023 Section 2.2.2.
  */
 
 import type {
@@ -77,34 +90,42 @@ const FEED_INTAKE: Record<FishSpecies, FeedIntakeParams> = {
 // kJ/d, converted to BW(g) via a = a' / 1000^b.
 // ============================================================================
 
+// IMPORTANT — feedCostScale interpretation per Soares 2023 Eq A.12:
+//   ATPexp = ATPcost_anab + (1 + fed_scaling × feedCostScale) × ATPcost_basal
+// → feedCostScale is the SPECIFIC DYNAMIC ACTION (SDA) multiplier, i.e. the
+//   fractional INCREASE in basal ATP cost when the fish is fully fed.
+//   It is NOT 1-k_E (energy retention efficiency). Typical SDA values in
+//   fish literature (Secor 2009 review; Carter & Brafield 1992):
+//     - Marine carnivores (high-protein meals): 0.25-0.45
+//     - Salmonids: 0.20-0.35
+//     - Omnivores (tilapia): 0.15-0.25
+
 const ENERGY_METABOLISM: Record<FishSpecies, EnergyMetabolismParams> = {
-  // Nobre et al. 2019, Aquac. Eng. 84:12, Table 1: FM_E = 7.43·e^(0.068T)·BW(kg)^0.80
-  // Conversion: 7.43 / 1000^0.80 = 0.02958
-  // feedCostScale = 1 - k_E ≈ 0.55 (Raposo PhD thesis Ch.6: seabream k_E in 0.45-0.50 group)
-  gilthead_seabream: { feedCostScale: 0.55, basalATP_a: 0.02958, basalATP_b: 0.80, basalATP_c: 0.068 },
+  // Nobre 2019 Table 1: FM_E = 7.43·e^(0.068T)·BW(kg)^0.80 → /1000^0.80 = 0.02958
+  // SDA mid-range (marine carnivore): 0.30
+  gilthead_seabream: { feedCostScale: 0.30, basalATP_a: 0.02958, basalATP_b: 0.80, basalATP_c: 0.068 },
 
-  // Lupatsch & Kissil 2001: DE_m = 43.6 kJ·BW(kg)^0.79/d at trial mean T (~25 °C)
-  // a₀ = 43.6/exp(0.07·25) = 7.58 → /1000^0.79 = 0.03232
-  // feedCostScale ≈ 0.45 (Raposo Ch.6: seabass k_E in 0.50-0.60 group)
-  european_seabass:  { feedCostScale: 0.45, basalATP_a: 0.03232, basalATP_b: 0.79, basalATP_c: 0.070 },
+  // Lupatsch & Kissil 2001: DE_m = 43.6·BW(kg)^0.79 at T≈25°C
+  // a₀ = 43.6/exp(0.07·25) /1000^0.79 = 0.03232
+  // SDA mid-range (marine carnivore): 0.30
+  european_seabass:  { feedCostScale: 0.30, basalATP_a: 0.03232, basalATP_b: 0.79, basalATP_c: 0.070 },
 
-  // Atlantic salmon. Salmonid review reports DE_m 75-100 kJ/(kg^0.80·d).
-  // Raposo PhD thesis Ch.6: salmon exp_E in 0.82-0.87 range (mid 0.845);
-  // k_E in 0.45-0.50 group (feedCostScale ≈ 0.55); Q10 in 1-2 (c≈0.05).
-  // Using DE_m=87 kJ/(kg^0.845·d) at T=12 °C: a₀ = 87/exp(0.05·12) = 47.7
-  // → /1000^0.845 = 0.1265
-  atlantic_salmon:   { feedCostScale: 0.55, basalATP_a: 0.12650, basalATP_b: 0.845, basalATP_c: 0.050 },
+  // Atlantic salmon. DE_m≈87 kJ/(kg^0.845·d) at T=12°C from salmonid lit;
+  // Raposo PhD Ch.6: exp_E mid 0.845; Q10 1-2 → c≈0.05.
+  // a₀ = 87/exp(0.05·12) /1000^0.845 = 0.1265
+  // SDA salmonid: 0.25
+  atlantic_salmon:   { feedCostScale: 0.25, basalATP_a: 0.12650, basalATP_b: 0.845, basalATP_c: 0.050 },
 
   // Rainbow trout. Cho & Kaushik 1990 / Bureau: DE_m ≈ 67 kJ/kg^0.8/d.
-  // Raposo PhD thesis Ch.6: trout exp_E in 0.62-0.80 (mid 0.71);
-  // k_E in 0.45-0.50 group; Q10 ≈ 1 → basalATP_c ≈ 0 (unique among species).
-  // a₀ = 67 / 1000^0.71 = 0.4900 (kJ/d per g^0.71, T-independent)
-  rainbow_trout:     { feedCostScale: 0.55, basalATP_a: 0.49000, basalATP_b: 0.71,  basalATP_c: 0.000 },
+  // Raposo PhD Ch.6: trout exp_E mid 0.71; Q10 ≈ 1 → c≈0 (unique).
+  // a₀ = 67 / 1000^0.71 = 0.4900
+  // SDA salmonid: 0.25
+  rainbow_trout:     { feedCostScale: 0.25, basalATP_a: 0.49000, basalATP_b: 0.71,  basalATP_c: 0.000 },
 
-  // Chowdhury et al. 2013: DE_m = 25.9 kJ/(kg^0.80·d) at 28 °C
-  // a₀ = 25.9/exp(0.068·28) = 3.84 → /1000^0.80 = 0.01530
-  // feedCostScale ≈ 0.45 (Raposo Ch.6: tilapia k_E in 0.50-0.60 group)
-  nile_tilapia:      { feedCostScale: 0.45, basalATP_a: 0.01530, basalATP_b: 0.80, basalATP_c: 0.068 },
+  // Chowdhury 2013: DE_m = 25.9 kJ/(kg^0.80·d) at 28°C
+  // a₀ = 25.9/exp(0.068·28) /1000^0.80 = 0.01530
+  // SDA omnivore (lower-protein meals, more carbs): 0.20
+  nile_tilapia:      { feedCostScale: 0.20, basalATP_a: 0.01530, basalATP_b: 0.80, basalATP_c: 0.068 },
 };
 
 // ============================================================================
