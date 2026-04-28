@@ -8,15 +8,21 @@
  *   - Rainbow trout (Oncorhynchus mykiss)
  *   - Nile tilapia (Oreochromis niloticus)
  *
- * Confidence per species:
- *   HIGH    seabream  (full EP-model param table from Nobre et al. 2019)
- *   MEDIUM  seabass   (Lupatsch & Kissil 2001 FM coefficients)
- *   MEDIUM  tilapia   (Raposo et al. 2024 + Chowdhury et al. 2013 FM at 28 °C)
- *   LOW     salmon    (literature ranges only — TODO)
- *   LOW     trout     (Cho & Kaushik 1990 / Bureau ranges — TODO)
+ * Primary sources used:
+ *   - Nobre et al. 2019, Aquac. Eng. 84:12  — seabream EP model parametrisation
+ *   - Lupatsch & Kissil 2001, Aquaculture 202:289 — seabass FM coefficients
+ *   - Lupatsch et al. 2003a, Aquaculture 225:175  — feed intake values
+ *   - Chowdhury et al. 2013, Aquaculture 410:138  — tilapia FM at 28 °C
+ *   - Cho & Kaushik 1990 / Bureau & Cho 2003       — salmonid DE_m ranges
+ *   - Raposo PhD thesis (ICBAS/U. Porto, 2024) Ch.6 — multi-species comparison
+ *     of metabolic body-weight exponents, k_E/k_P retention efficiencies,
+ *     and Q10 (temperature) effects across all five species
  *
  * Parameter groups still held in shared baselines (TODO Soares et al. 2023):
  *   proteinMetabolism, gluconeogenesis, glucoseOxidation, lipogenesis
+ *   (these reflect the protein-flux and carbon-metabolism submodels whose
+ *   per-species calibrated values appear only in the FEEDNETICS paper /
+ *   its supplementary tables, which were not available)
  */
 
 import type {
@@ -59,24 +65,31 @@ const FEED_INTAKE: Record<FishSpecies, FeedIntakeParams> = {
 const ENERGY_METABOLISM: Record<FishSpecies, EnergyMetabolismParams> = {
   // Nobre et al. 2019, Aquac. Eng. 84:12, Table 1: FM_E = 7.43·e^(0.068T)·BW(kg)^0.80
   // Conversion: 7.43 / 1000^0.80 = 0.02958
-  gilthead_seabream: { feedCostScale: 1.0, basalATP_a: 0.02958, basalATP_b: 0.80, basalATP_c: 0.068 },
+  // feedCostScale = 1 - k_E ≈ 0.55 (Raposo PhD thesis Ch.6: seabream k_E in 0.45-0.50 group)
+  gilthead_seabream: { feedCostScale: 0.55, basalATP_a: 0.02958, basalATP_b: 0.80, basalATP_c: 0.068 },
 
   // Lupatsch & Kissil 2001: DE_m = 43.6 kJ·BW(kg)^0.79/d at trial mean T (~25 °C)
-  // Assuming c=0.07: a₀ = 43.6/exp(0.07·25) = 7.58 → /1000^0.79 = 0.03232
-  european_seabass:  { feedCostScale: 1.0, basalATP_a: 0.03232, basalATP_b: 0.79, basalATP_c: 0.070 },
+  // a₀ = 43.6/exp(0.07·25) = 7.58 → /1000^0.79 = 0.03232
+  // feedCostScale ≈ 0.45 (Raposo Ch.6: seabass k_E in 0.50-0.60 group)
+  european_seabass:  { feedCostScale: 0.45, basalATP_a: 0.03232, basalATP_b: 0.79, basalATP_c: 0.070 },
 
-  // TODO: Atlantic salmon FM_E equation pending. Salmonid review reports
-  // 75-100 kJ/kg·d maintenance, fasting energy loss ≈ 0.518·BW(kg)^0.80 kJ/d.
-  // Approximated with seabream-like temperature coefficient.
-  atlantic_salmon:   { feedCostScale: 1.0, basalATP_a: 0.00206, basalATP_b: 0.80, basalATP_c: 0.050 },
+  // Atlantic salmon. Salmonid review reports DE_m 75-100 kJ/(kg^0.80·d).
+  // Raposo PhD thesis Ch.6: salmon exp_E in 0.82-0.87 range (mid 0.845);
+  // k_E in 0.45-0.50 group (feedCostScale ≈ 0.55); Q10 in 1-2 (c≈0.05).
+  // Using DE_m=87 kJ/(kg^0.845·d) at T=12 °C: a₀ = 87/exp(0.05·12) = 47.7
+  // → /1000^0.845 = 0.1265
+  atlantic_salmon:   { feedCostScale: 0.55, basalATP_a: 0.12650, basalATP_b: 0.845, basalATP_c: 0.050 },
 
-  // TODO: Rainbow trout. Cho & Kaushik 1990 / Bureau: DE_m ≈ 67 kJ/kg^0.8/d
-  // at T~15 °C; basal/fasting ~30-40 kJ/kg^0.8/d. Approximated.
-  rainbow_trout:     { feedCostScale: 1.0, basalATP_a: 0.06700, basalATP_b: 0.80, basalATP_c: 0.050 },
+  // Rainbow trout. Cho & Kaushik 1990 / Bureau: DE_m ≈ 67 kJ/kg^0.8/d.
+  // Raposo PhD thesis Ch.6: trout exp_E in 0.62-0.80 (mid 0.71);
+  // k_E in 0.45-0.50 group; Q10 ≈ 1 → basalATP_c ≈ 0 (unique among species).
+  // a₀ = 67 / 1000^0.71 = 0.4900 (kJ/d per g^0.71, T-independent)
+  rainbow_trout:     { feedCostScale: 0.55, basalATP_a: 0.49000, basalATP_b: 0.71,  basalATP_c: 0.000 },
 
   // Chowdhury et al. 2013: DE_m = 25.9 kJ/(kg^0.80·d) at 28 °C
   // a₀ = 25.9/exp(0.068·28) = 3.84 → /1000^0.80 = 0.01530
-  nile_tilapia:      { feedCostScale: 1.0, basalATP_a: 0.01530, basalATP_b: 0.80, basalATP_c: 0.068 },
+  // feedCostScale ≈ 0.45 (Raposo Ch.6: tilapia k_E in 0.50-0.60 group)
+  nile_tilapia:      { feedCostScale: 0.45, basalATP_a: 0.01530, basalATP_b: 0.80, basalATP_c: 0.068 },
 };
 
 // ============================================================================
@@ -93,13 +106,17 @@ const AA_MAINTENANCE: Record<FishSpecies, AAMaintenanceParams> = {
   // Lupatsch & Kissil 2001: DP_m = 0.66·BW(kg)^0.69 (T-independent in published form)
   european_seabass:  { req_prot_a: 0.660, req_prot_b: 0.000, req_prot_c: 0.69 },
 
-  // TODO: Atlantic salmon FM_P equation pending. Approximated with seabream form.
-  atlantic_salmon:   { req_prot_a: 0.061, req_prot_b: 0.068, req_prot_c: 0.70 },
+  // Atlantic salmon. Raposo PhD thesis Ch.6: exp_P 0.77-0.83 (mid 0.80);
+  // protein FM "similar to seabass and trout"; Q10 1-2 → b≈0.04.
+  // Anchored to Lupatsch-style DP_m ≈ 0.50 g/(kg^0.80·d).
+  atlantic_salmon:   { req_prot_a: 0.500, req_prot_b: 0.040, req_prot_c: 0.80 },
 
-  // TODO: Rainbow trout FM_P. Approximated with seabream form.
-  rainbow_trout:     { req_prot_a: 0.061, req_prot_b: 0.068, req_prot_c: 0.70 },
+  // Rainbow trout. Raposo Ch.6: exp_P 0.71-0.78 (mid 0.745); Q10 > 2 for protein
+  // → fmp_b higher than other species (b≈0.07). Anchored to DP_m ≈ 0.45.
+  rainbow_trout:     { req_prot_a: 0.450, req_prot_b: 0.070, req_prot_c: 0.745 },
 
   // Chowdhury et al. 2013: DP_m = 0.45 g/(kg^0.80·d) at 28 °C; T-independent form.
+  // Raposo Ch.6 confirms tilapia has highest fmp_a and exp_P in 0.73-0.85.
   nile_tilapia:      { req_prot_a: 0.450, req_prot_b: 0.000, req_prot_c: 0.80 },
 };
 
