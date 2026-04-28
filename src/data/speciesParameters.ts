@@ -98,14 +98,20 @@ import type {
 const FEED_INTAKE: Record<FishSpecies, FeedIntakeParams> = {
   // Lupatsch et al. 2003a, Aquaculture
   gilthead_seabream: { a: 0.0586, b: 0.578, c: 0.062, T_low: 11, T_high: 28, beta: 1.0 },
-  // Lupatsch & Kissil 2001, Aquaculture 202:289
-  european_seabass:  { a: 0.0640, b: 0.587, c: 0.070, T_low: 12, T_high: 28, beta: 1.0 },
-  // Bureau & Cho 1998 / Lupatsch 2010 (simplified linear T form)
-  atlantic_salmon:   { a: 0.0060, b: 0.800, c: 0.050, T_low:  4, T_high: 20, beta: 1.0 },
-  // Cho & Kaushik 1990 / Bureau 2003
+  // Lupatsch & Kissil 2001, Aquaculture 202:289 — voluntary feed intake at
+  // 100g seabream/22°C ≈ 3% BW (vs published 4.46% would over-predict SGR).
+  // a re-fitted to typical commercial feeding regime.
+  european_seabass:  { a: 0.0440, b: 0.587, c: 0.070, T_low: 12, T_high: 28, beta: 1.0 },
+  // Bureau & Cho 1998 / Lupatsch 2010; Andersen et al. 2025 quadratic-T form
+  //   FI = 0.006·BW^0.80·exp(0.287T - 0.012T²) → fit exp form at salmon
+  //   typical T (10-13°C peak): a₀ ≈ 0.006, c ≈ 0.145
+  // Re-fitted to match published FI ≈ 1.3 g/d for 100g salmon at 12°C.
+  atlantic_salmon:   { a: 0.0060, b: 0.800, c: 0.145, T_low:  4, T_high: 20, beta: 1.0 },
+  // Cho & Kaushik 1990 / Bureau 2003. Bureau 2006 trout 1-2.5% BW at T=15°C.
   rainbow_trout:     { a: 0.0250, b: 0.700, c: 0.060, T_low:  4, T_high: 19, beta: 1.0 },
   // Lupatsch 2010 (Oreochromis); Soares et al. 2023 Table 1 envelope (T 18–30 °C)
-  nile_tilapia:      { a: 0.0450, b: 0.700, c: 0.055, T_low: 18, T_high: 30, beta: 1.0 },
+  // Re-calibrated to match published 3% BW feeding for 100g tilapia at 28°C.
+  nile_tilapia:      { a: 0.0260, b: 0.700, c: 0.055, T_low: 18, T_high: 30, beta: 1.0 },
 };
 
 // ============================================================================
