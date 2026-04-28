@@ -107,7 +107,9 @@ const FEED_INTAKE: Record<FishSpecies, FeedIntakeParams> = {
   //   typical T (10-13°C peak): a₀ ≈ 0.006, c ≈ 0.145
   // Re-fitted to match published FI ≈ 1.3 g/d for 100g salmon at 12°C.
   atlantic_salmon:   { a: 0.0060, b: 0.800, c: 0.145, T_low:  4, T_high: 20, beta: 1.0 },
-  // Cho & Kaushik 1990 / Bureau 2003. Bureau 2006 trout 1-2.5% BW at T=15°C.
+  // Cho & Kaushik 1990 / Bureau 2003 academic baseline. Modern commercial
+  // Turkish/Norwegian operations may need a≈0.040 to match field FCR≈1.5
+  // for 300g→1.8kg in 180d (see examples/field_validation_trout.ts).
   rainbow_trout:     { a: 0.0250, b: 0.700, c: 0.060, T_low:  4, T_high: 19, beta: 1.0 },
   // Lupatsch 2010 (Oreochromis); Soares et al. 2023 Table 1 envelope (T 18–30 °C)
   // Re-calibrated to match published 3% BW feeding for 100g tilapia at 28°C.
